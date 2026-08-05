@@ -1,7 +1,9 @@
-import Image from "next/image";
+import { DashboardGridDemo } from "@/components/dashboard-grid-demo";
 
 export default function Home() {
   return (
-    <div>This is the index page!</div>
+    <div className="p-4">
+      <DashboardGridDemo />
+    </div>
   );
 }
