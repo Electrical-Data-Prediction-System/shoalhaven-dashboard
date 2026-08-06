@@ -25,6 +25,11 @@ import {
 } from "@/components/ui/table"
 import { Button } from "./ui/button"
 
+import { IoWalletSharp } from "react-icons/io5";
+import { MdEnergySavingsLeaf } from "react-icons/md"
+import { FaGauge, FaGaugeHigh } from "react-icons/fa6"
+
+
 
 // One "layout item" per grid box: x/y are grid-cell coordinates,
 // w/h are how many columns/rows it spans. i must match a rendered child's key.
@@ -71,10 +76,10 @@ const costOverviewData = [
 
 const stationPowerUsageData = [
   { name: "Staion 1", KPI: "4,554", KWH: "344", bounceRate: "46.32%" },
-  { name: "Staion 2", KPI: "4,554", KWH: "344", bounceRate: "46.32%" },
-  { name: "Staion 3", KPI: "4,554", KWH: "344", bounceRate: "46.32%" },
-  { name: "Staion 4", KPI: "4,554", KWH: "344", bounceRate: "46.32%" },
-  { name: "Staion 5", KPI: "4,554", KWH: "344", bounceRate: "46.32%" },
+  { name: "Staion 2", KPI: "6,422", KWH: "564", bounceRate: "23.22%" },
+  { name: "Staion 3", KPI: "1,432", KWH: "423", bounceRate: "12.11%" },
+  { name: "Staion 4", KPI: "7,432", KWH: "743", bounceRate: "65.4%" },
+  { name: "Staion 5", KPI: "3,425", KWH: "312", bounceRate: "43.02%" },
 ]
 
 export function DashboardGridDemo() {
@@ -121,13 +126,18 @@ export function DashboardGridDemo() {
                 $2,473 KWH
               </CardTitle>
               <CardAction>
-                <Badge variant="outline">
-                  <span className="text-green-400">-3.48%</span>
-                </Badge>
+                <div className="w-10 h-10 bg-blue-500 flex items-center justify-center rounded-lg">
+                  <IoWalletSharp className="text-white text-lg" />
+                </div>
+
+
               </CardAction>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1.5 text-sm">
               <div className="line-clamp-1 flex gap-2 font-medium">
+                <Badge variant="outline">
+                  <span className="text-green-400">-3.48%</span>
+                </Badge>
                 Trending down
               </div>
               <div className="text-muted-foreground">
@@ -143,13 +153,17 @@ export function DashboardGridDemo() {
                 1,231 KWH
               </CardTitle>
               <CardAction>
-                <Badge variant="outline">
-                  <span className="text-green-400">-5.20%</span>
-                </Badge>
+                <div className="w-10 h-10 bg-blue-500 flex items-center justify-center rounded-lg">
+                  <MdEnergySavingsLeaf className="text-white text-lg" />
+                </div>
+
               </CardAction>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1.5 text-sm">
               <div className="line-clamp-1 flex gap-2 font-medium">
+                <Badge variant="outline">
+                  <span className="text-green-400">-5.20%</span>
+                </Badge>
                 Trending down
               </div>
               <div className="text-muted-foreground">
@@ -165,13 +179,16 @@ export function DashboardGridDemo() {
                 320 KWH
               </CardTitle>
               <CardAction>
-                <Badge variant="outline">
-                  <span className="text-red-400">+2.82%</span>
-                </Badge>
+                <div className="w-10 h-10 bg-blue-500 flex items-center justify-center rounded-lg">
+                  <FaGauge  className="text-white text-lg" />
+                </div>
               </CardAction>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1.5 text-sm">
               <div className="line-clamp-1 flex gap-2 font-medium">
+                <Badge variant="outline">
+                  <span className="text-red-400">+2.82%</span>
+                </Badge>
                 Trending up
               </div>
               <div className="text-muted-foreground">
@@ -187,13 +204,18 @@ export function DashboardGridDemo() {
                 $100,000
               </CardTitle>
               <CardAction>
-                <Badge variant="outline">
-                  <span className="text-green-400">-8.12%</span>
-                </Badge>
+
+                <div className="w-10 h-10 bg-blue-500 flex items-center justify-center rounded-lg">
+                  <FaGaugeHigh className="text-white text-lg" />
+                </div>
               </CardAction>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1.5 text-sm">
+
               <div className="line-clamp-1 flex gap-2 font-medium">
+                <Badge variant="outline">
+                  <span className="text-green-400">-8.12%</span>
+                </Badge>
                 Trending down
               </div>
               <div className="text-muted-foreground">
@@ -238,7 +260,7 @@ export function DashboardGridDemo() {
                   <TableHead className="w-[100px]">Station Name</TableHead>
                   <TableHead>KPI</TableHead>
                   <TableHead>KWH</TableHead>
-                  <TableHead className="text-right">Bounce Rate</TableHead>
+                  <TableHead className="text-right">Energy Rate</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
