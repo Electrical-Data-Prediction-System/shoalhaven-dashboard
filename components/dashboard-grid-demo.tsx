@@ -4,15 +4,7 @@ import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type Responsi
 import { ResponsiveLine } from "@nivo/line"
 import { useLocalStorage } from "@/hooks/useLocalStorage"
 import "react-grid-layout/css/styles.css"
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "./ui/badge"
+import { StatCard } from "@/components/ui/stat-card"
 import { ResponsiveBar } from "@nivo/bar"
 
 import {
@@ -25,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "./ui/button"
+import { Wallet, Zap, TrendingUp, DollarSign } from "lucide-react"
 
 import { IoWalletSharp } from "react-icons/io5";
 import { MdEnergySavingsLeaf } from "react-icons/md"
@@ -35,13 +28,13 @@ const STORAGE_KEY = "layout-power"
 
 const defaultLayouts: ResponsiveLayouts = {
   lg: [
-    { i: "energy-cost", x: 0, y: 0, w: 2, h: 2 },
-    { i: "energy-consumption", x: 2, y: 0, w: 2, h: 2 },
-    { i: "peak-load", x: 4, y: 0, w: 2, h: 2 },
-    { i: "current-load", x: 6, y: 0, w: 2, h: 2 },
+    { i: "energy-cost", x: 0, y: 0, w: 3, h: 2 },
+    { i: "energy-consumption", x: 3, y: 0, w: 3, h: 2 },
+    { i: "peak-load", x: 6, y: 0, w: 3, h: 2 },
+    { i: "current-load", x: 9, y: 0, w: 3, h: 2 },
     { i: "power-usage", x: 0, y: 2, w: 6, h: 4 },
     { i: "cost-overview", x: 6, y: 2, w: 2, h: 4 },
-    { i: "station-power-usage", x: 0, y: 4, w: 4, h: 4 },
+    { i: "station-power-usage", x: 0, y: 6, w: 4, h: 4 },
   ],
 }
 
@@ -75,11 +68,11 @@ const costOverviewData = [
 ]
 
 const stationPowerUsageData = [
-  { name: "Staion 1", KPI: "4,554", KWH: "344", bounceRate: "46.32%" },
-  { name: "Staion 2", KPI: "6,422", KWH: "564", bounceRate: "23.22%" },
-  { name: "Staion 3", KPI: "1,432", KWH: "423", bounceRate: "12.11%" },
-  { name: "Staion 4", KPI: "7,432", KWH: "743", bounceRate: "65.4%" },
-  { name: "Staion 5", KPI: "3,425", KWH: "312", bounceRate: "43.02%" },
+  { name: "Staion 1", KPI: "4,694", KWH: "340", bounceRate: "46.53%" },
+  { name: "Staion 2", KPI: "3,985", KWH: "319", bounceRate: "46.53%" },
+  { name: "Staion 3", KPI: "3,513", KWH: "294", bounceRate: "36.49%" },
+  { name: "Staion 4", KPI: "2,050", KWH: "147", bounceRate: "50.87%" },
+  { name: "Staion 5", KPI: "1,795", KWH: "190", bounceRate: "46.32%" },
 ]
 
 export function DashboardGridDemo() {
@@ -133,111 +126,45 @@ export function DashboardGridDemo() {
             </div>
           </div>
 
+          {/* energy cost*/}
+          <StatCard
+            key="energy-cost"
+            description="Energy Cost"
+            value="$2,473 KWH"
+            icon={Wallet}
+            trendValue="-3.48%"
+            trendPositive
+          />
 
-          <Card className="@container/card" key="energy-cost">
-            <CardHeader>
-              <CardDescription>Energy Cost</CardDescription>
-              <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                $2,473 KWH
-              </CardTitle>
-              <CardAction>
-                <div className="w-10 h-10 bg-blue-500 flex items-center justify-center rounded-lg">
-                  <IoWalletSharp className="text-white text-lg" />
-                </div>
+          {/* energy consumption */}
+          <StatCard
+            key="energy-consumption"
+            description="Energy Consumption"
+            value="1,231 KWH"
+            icon={Zap}
+            trendValue="-5.20%"
+            trendPositive
+          />
 
+          {/* peak load */}
+          <StatCard
+            key="peak-load"
+            description="Peak Load"
+            value="320 KWH"
+            icon={TrendingUp}
+            trendValue="+2.82%"
+            trendPositive={false}
+          />
 
-              </CardAction>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1.5 text-sm flex-grow-1">
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                <Badge variant="outline">
-                  <span className="text-green-400">-3.48%</span>
-                </Badge>
-                Trending down
-              </div>
-              <div className="text-muted-foreground">
-                Since last month
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className="@container/card" key="energy-consumption">
-            <CardHeader>
-              <CardDescription>Energy Consumption</CardDescription>
-              <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                1,231 KWH
-              </CardTitle>
-              <CardAction>
-                <div className="w-10 h-10 bg-blue-500 flex items-center justify-center rounded-lg">
-                  <MdEnergySavingsLeaf className="text-white text-lg" />
-                </div>
-
-              </CardAction>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1.5 text-sm flex-grow-1">
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                <Badge variant="outline">
-                  <span className="text-green-400">-5.20%</span>
-                </Badge>
-                Trending down
-              </div>
-              <div className="text-muted-foreground">
-                Since last month
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className="@container/card" key="peak-load">
-            <CardHeader>
-              <CardDescription>Peak Load</CardDescription>
-              <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                320 KWH
-              </CardTitle>
-              <CardAction>
-                <div className="w-10 h-10 bg-blue-500 flex items-center justify-center rounded-lg">
-                  <FaGauge  className="text-white text-lg" />
-                </div>
-              </CardAction>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1.5 text-sm flex-grow-1">
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                <Badge variant="outline">
-                  <span className="text-red-400">+2.82%</span>
-                </Badge>
-                Trending up
-              </div>
-              <div className="text-muted-foreground">
-                Since last month
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className="@container/card" key="current-load">
-            <CardHeader>
-              <CardDescription>Total Revenue</CardDescription>
-              <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                $100,000
-              </CardTitle>
-              <CardAction>
-
-                <div className="w-10 h-10 bg-blue-500 flex items-center justify-center rounded-lg">
-                  <FaGaugeHigh className="text-white text-lg" />
-                </div>
-              </CardAction>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1.5 text-sm flex-grow-1">
-
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                <Badge variant="outline">
-                  <span className="text-green-400">-8.12%</span>
-                </Badge>
-                Trending down
-              </div>
-              <div className="text-muted-foreground">
-                Since last month
-              </div>
-            </CardFooter>
-          </Card>
+          {/* current load*/}
+          <StatCard
+            key="current-load"
+            description="Total Revenue"
+            value="$100,000"
+            icon={DollarSign}
+            trendValue="-8.12%"
+            trendPositive
+          />
 
 
           <div
