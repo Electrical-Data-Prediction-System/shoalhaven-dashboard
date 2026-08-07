@@ -27,14 +27,11 @@ import {
 } from "@/components/ui/table"
 import { Button } from "./ui/button"
 
-<<<<<<< HEAD
-const STORAGE_KEY = "layout-power"
-=======
 import { IoWalletSharp } from "react-icons/io5";
 import { MdEnergySavingsLeaf } from "react-icons/md"
 import { FaGauge, FaGaugeHigh } from "react-icons/fa6"
 
->>>>>>> 6ddae1ecce77c432c0abb7723bda0d2840153739
+const STORAGE_KEY = "layout-power"
 
 
 // One "layout item" per grid box: x/y are grid-cell coordinates,
