@@ -4,9 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-.react-grid-placeholder {
-  @apply !rounded-lg;
-}
 
 @theme inline {
   --color-background: var(--background);
