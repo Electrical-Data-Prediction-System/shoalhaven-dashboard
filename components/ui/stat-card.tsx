@@ -43,7 +43,7 @@ export function StatCard({
           </div>
         </div>
       </CardHeader>
-      <CardFooter className="gap-1.5 text-sm">
+      <CardFooter className="gap-1.5 text-sm flex-grow-1">
         <span className={trendPositive ? "font-medium text-green-500" : "font-medium text-red-500"}>
           {trendValue}
         </span>
