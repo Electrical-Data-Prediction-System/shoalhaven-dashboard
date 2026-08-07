@@ -38,7 +38,7 @@ export function StatCard({
             {value}
           </CardTitle>
         
-          <div className="absolute right-6 top-1/3 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg bg-brand-primary-500 text-white">
+          <div className="absolute right-6 top-1/3 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg bg-brand-secondary-700 text-white">
             <Icon className="size-4" />
           </div>
         </div>

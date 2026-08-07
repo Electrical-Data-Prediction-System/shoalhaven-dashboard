@@ -46,7 +46,8 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-
+  
+  /* colours in figma */
   --color-brand-primary-700: #001F3B;
   --color-brand-primary-500: #003566;
   --color-brand-primary-300: #0057A3;
