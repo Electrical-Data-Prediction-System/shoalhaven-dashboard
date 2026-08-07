@@ -47,10 +47,22 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  
+  /* colours in figma */
+  --color-brand-primary-700: #001F3B;
+  --color-brand-primary-500: #003566;
+  --color-brand-primary-300: #0057A3;
+  --color-brand-secondary-700: #5AA0E2;
+  --color-brand-secondary-500: #6CB5D8;
+  --color-brand-secondary-300: #AEDEEA;
+  --color-brand-warning-700: #EFB100;
+  --color-brand-warning-500: #FF8B00;
+  --color-brand-warning-300: #FFC514;
+
 }
 
 :root {
-  --background: oklch(1 0 0);
+  --background: oklch(0.95 0.02 240);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -82,6 +94,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  --gradient-primary: linear-gradient(180deg, #0057A3 0%, #5AA0E2 100%);
+  --gradient-dark: linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%);
+  --primary: #003566;            
+  --background: oklch(0.97 0.01 240); /* backdrop */
+  --sidebar-primary: #5AA0E2;
+  --sidebar-primary-foreground: #ffffff;
+
+
+
 }
 
 .dark {
