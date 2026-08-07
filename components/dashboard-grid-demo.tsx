@@ -1,7 +1,9 @@
 "use client"
 
-import { ResponsiveGridLayout, useContainerWidth } from "react-grid-layout"
+import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from "react-grid-layout"
 import { ResponsiveLine } from "@nivo/line"
+import { useLocalStorage } from "@/hooks/useLocalStorage"
+import { useRef, useState } from "react"
 import "react-grid-layout/css/styles.css"
 import {
   Card,
@@ -25,10 +27,12 @@ import {
 } from "@/components/ui/table"
 import { Button } from "./ui/button"
 
+const STORAGE_KEY = "layout-power"
+
 
 // One "layout item" per grid box: x/y are grid-cell coordinates,
 // w/h are how many columns/rows it spans. i must match a rendered child's key.
-const layouts = {
+const defaultLayouts: ResponsiveLayouts = {
   lg: [
     { i: "energy-cost", x: 0, y: 0, w: 2, h: 2 },
     { i: "energy-consumption", x: 2, y: 0, w: 2, h: 2 },
@@ -78,7 +82,21 @@ const stationPowerUsageData = [
 ]
 
 export function DashboardGridDemo() {
-  const { width, containerRef, mounted } = useContainerWidth()
+  const [layouts, setLayouts] = useLocalStorage<ResponsiveLayouts>(STORAGE_KEY, defaultLayouts)
+  const { width, containerRef, mounted } = useContainerWidth({
+    measureBeforeMount: true,
+  })
+
+  const handleLayoutChange = (_currentLayout: readonly LayoutItem[], allLayouts: ResponsiveLayouts) => {
+    setLayouts(allLayouts);
+  }
+
+
+  // Power usage data
+  // Cost overview data
+  // Station power usage data
+
+
 
   return (
     <div ref={containerRef}>
@@ -91,6 +109,7 @@ export function DashboardGridDemo() {
           rowHeight={80}
           margin={[16, 16]}
           onWidthChange={(containerWidth, margin, cols) => console.log({ containerWidth, cols })}
+          onLayoutChange={handleLayoutChange}
         >
           <div
             key="power-usage"
