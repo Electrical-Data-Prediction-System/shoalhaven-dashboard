@@ -17,11 +17,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "./ui/button"
-import { Wallet, Zap, TrendingUp, DollarSign } from "lucide-react"
-
-import { IoWalletSharp } from "react-icons/io5";
+import { IoWalletSharp } from "react-icons/io5"
 import { MdEnergySavingsLeaf } from "react-icons/md"
-import { FaGauge, FaGaugeHigh } from "react-icons/fa6"
+import { FaGaugeHigh } from "react-icons/fa6"
+import { FaDollarSign } from "react-icons/fa"
 import { LineGraph } from "./widget/line-graph"
 
 const STORAGE_KEY = "layout-power"
@@ -132,7 +131,7 @@ export function DashboardGridDemo() {
             key="energy-cost"
             description="Energy Cost"
             value="$2,473 KWH"
-            icon={Wallet}
+            icon={IoWalletSharp}
             trendValue="-3.48%"
             trendPositive
           />
@@ -142,7 +141,7 @@ export function DashboardGridDemo() {
             key="energy-consumption"
             description="Energy Consumption"
             value="1,231 KWH"
-            icon={Zap}
+            icon={MdEnergySavingsLeaf}
             trendValue="-5.20%"
             trendPositive
           />
@@ -152,7 +151,7 @@ export function DashboardGridDemo() {
             key="peak-load"
             description="Peak Load"
             value="320 KWH"
-            icon={TrendingUp}
+            icon={FaGaugeHigh}
             trendValue="+2.82%"
             trendPositive={false}
           />
@@ -162,7 +161,7 @@ export function DashboardGridDemo() {
             key="current-load"
             description="Total Revenue"
             value="$100,000"
-            icon={DollarSign}
+            icon={FaDollarSign}
             trendValue="-8.12%"
             trendPositive
           />

@@ -1,5 +1,6 @@
 import type * as React from "react"
-import type { LucideIcon } from "lucide-react"
+import type { IconType } from "react-icons"
+
 import {
   Card,
   CardDescription,
@@ -26,6 +27,7 @@ export function StatCard({
   trendPositive = true,
   footerText = "Since last month",
   className,
+  children,
   ...props
 }: StatCardProps) {
   return (
@@ -38,17 +40,22 @@ export function StatCard({
             {value}
           </CardTitle>
         
-          <div className="absolute right-6 top-1/3 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg bg-brand-secondary-700 text-white">
-            <Icon className="size-4" />
+          <div className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-lg bg-brand-secondary-700 text-white">
+            <Icon className="size-5" />
           </div>
         </div>
       </CardHeader>
+<<<<<<< HEAD
+      <CardFooter className="flex-col items-start gap-1.5 text-sm flex-grow-1">
+=======
       <CardFooter className="gap-1.5 text-sm flex-grow-1">
+>>>>>>> fdde18fd661732be7c92bb4279427436d577839c
         <span className={trendPositive ? "font-medium text-green-500" : "font-medium text-red-500"}>
           {trendValue}
         </span>
         <span className="text-muted-foreground">{footerText}</span>
       </CardFooter>
+      {children}
     </Card>
   )
 }
