@@ -28,6 +28,7 @@ import { Button } from "./ui/button"
 import { IoWalletSharp } from "react-icons/io5";
 import { MdEnergySavingsLeaf } from "react-icons/md"
 import { FaGauge, FaGaugeHigh } from "react-icons/fa6"
+import { LineGraph } from "./widget/line-graph"
 
 
 
@@ -97,7 +98,7 @@ export function DashboardGridDemo() {
           margin={[16, 16]}
           onWidthChange={(containerWidth, margin, cols) => console.log({ containerWidth, cols })}
         >
-          <div
+          {/* <div
             key="power-usage"
             className="flex flex-col rounded-xl border bg-card p-4 shadow-sm"
           >
@@ -116,7 +117,7 @@ export function DashboardGridDemo() {
                 useMesh
               />
             </div>
-          </div>
+          </div> */}
 
 
           <Card className="@container/card" key="energy-cost">
@@ -180,7 +181,7 @@ export function DashboardGridDemo() {
               </CardTitle>
               <CardAction>
                 <div className="w-10 h-10 bg-blue-500 flex items-center justify-center rounded-lg">
-                  <FaGauge  className="text-white text-lg" />
+                  <FaGauge className="text-white text-lg" />
                 </div>
               </CardAction>
             </CardHeader>
@@ -275,6 +276,20 @@ export function DashboardGridDemo() {
               </TableBody>
             </Table>
           </div>
+
+
+
+          <div
+            key="power-usage"
+            className="flex flex-col rounded-xl border bg-card p-4 shadow-sm"
+          >
+            <h3 className="mb-2 text-sm font-semibold">Power Usage Overview</h3>
+            <div className="flex-1">
+              <LineGraph />
+
+            </div>
+          </div>
+
 
         </ResponsiveGridLayout>
       )}

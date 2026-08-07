@@ -1,4 +1,4 @@
-const API_URL = process.env.API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function ApiFetch(path : string, init? : RequestInit) {
     const res = await fetch(`${API_URL}${path}`, init);
@@ -16,13 +16,13 @@ export function GetAggregatedMeterPower(meterId : string, start? : Date, end? : 
     if(start) params.set("start", start.toISOString());
     if(end) params.set("end", end.toISOString());
 
-    return ApiFetch(`meters/${meterId}/aggregate-power?${params}`)
+    return ApiFetch(`/meters/${meterId}/aggregate-power?${params}`)
 }
 
 export function GetAllAggregatedMeterPower(start? : Date, end? : Date){
     const params = new URLSearchParams();
-    if(start) params.set("start", start.toISOString());
-    if(end) params.set("end", end.toISOString());
+    if(start) params.set("start", start.toISOString().split('T')[0]);
+    if(end) params.set("end", end.toISOString().split('T')[0]);
 
     return ApiFetch(`/meters/power/aggregate-power?${params}`);
 }
@@ -30,8 +30,10 @@ export function GetAllAggregatedMeterPower(start? : Date, end? : Date){
 // Dates are formated in ISO: 2026-08-03 05:34:37.967019
 export function GetReadingsBetween(meterId : string, start? : Date, end? : Date){
     const params = new URLSearchParams();
-    if(start) params.set("start", start.toISOString());
-    if(end) params.set("end", end.toISOString());
+    if(start) params.set("start", start.toISOString().split('T')[0]);
+    if(end) params.set("end", end.toISOString().split('T')[0]);
+
+    
 
     return ApiFetch(`/meters/${meterId}/readings?${params}`)
 }
