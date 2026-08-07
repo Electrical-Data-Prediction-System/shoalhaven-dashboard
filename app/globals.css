@@ -55,7 +55,7 @@
   --color-brand-primary-700: #001F3B;
   --color-brand-primary-500: #003566;
   --color-brand-primary-300: #0057A3;
-  --color-brand-secondary-700: #5AA0E2;
+  --color-brand-secondary-700: #217acc;
   --color-brand-secondary-500: #6CB5D8;
   --color-brand-secondary-300: #AEDEEA;
   --color-brand-warning-700: #EFB100;
@@ -102,7 +102,7 @@
   --gradient-dark: linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%);
   --primary: #003566;            
   --background: oklch(0.97 0.01 240); /* backdrop */
-  --sidebar-primary: #5AA0E2;
+  --sidebar-primary: #217acc;
   --sidebar-primary-foreground: #ffffff;
 
 
