@@ -3,7 +3,6 @@
 import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from "react-grid-layout"
 import { ResponsiveLine } from "@nivo/line"
 import { useLocalStorage } from "@/hooks/useLocalStorage"
-import { useRef, useState } from "react"
 import "react-grid-layout/css/styles.css"
 import {
   Card,
@@ -34,8 +33,6 @@ import { FaGauge, FaGaugeHigh } from "react-icons/fa6"
 const STORAGE_KEY = "layout-power"
 
 
-// One "layout item" per grid box: x/y are grid-cell coordinates,
-// w/h are how many columns/rows it spans. i must match a rendered child's key.
 const defaultLayouts: ResponsiveLayouts = {
   lg: [
     { i: "energy-cost", x: 0, y: 0, w: 2, h: 2 },
@@ -151,7 +148,7 @@ export function DashboardGridDemo() {
 
               </CardAction>
             </CardHeader>
-            <CardFooter className="flex-col items-start gap-1.5 text-sm">
+            <CardFooter className="flex-col items-start gap-1.5 text-sm flex-grow-1">
               <div className="line-clamp-1 flex gap-2 font-medium">
                 <Badge variant="outline">
                   <span className="text-green-400">-3.48%</span>
@@ -177,7 +174,7 @@ export function DashboardGridDemo() {
 
               </CardAction>
             </CardHeader>
-            <CardFooter className="flex-col items-start gap-1.5 text-sm">
+            <CardFooter className="flex-col items-start gap-1.5 text-sm flex-grow-1">
               <div className="line-clamp-1 flex gap-2 font-medium">
                 <Badge variant="outline">
                   <span className="text-green-400">-5.20%</span>
@@ -202,7 +199,7 @@ export function DashboardGridDemo() {
                 </div>
               </CardAction>
             </CardHeader>
-            <CardFooter className="flex-col items-start gap-1.5 text-sm">
+            <CardFooter className="flex-col items-start gap-1.5 text-sm flex-grow-1">
               <div className="line-clamp-1 flex gap-2 font-medium">
                 <Badge variant="outline">
                   <span className="text-red-400">+2.82%</span>
@@ -228,7 +225,7 @@ export function DashboardGridDemo() {
                 </div>
               </CardAction>
             </CardHeader>
-            <CardFooter className="flex-col items-start gap-1.5 text-sm">
+            <CardFooter className="flex-col items-start gap-1.5 text-sm flex-grow-1">
 
               <div className="line-clamp-1 flex gap-2 font-medium">
                 <Badge variant="outline">
