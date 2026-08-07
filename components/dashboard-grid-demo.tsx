@@ -1,7 +1,8 @@
 "use client"
 
-import { ResponsiveGridLayout, useContainerWidth } from "react-grid-layout"
+import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from "react-grid-layout"
 import { ResponsiveLine } from "@nivo/line"
+import { useLocalStorage } from "@/hooks/useLocalStorage"
 import "react-grid-layout/css/styles.css"
 import { StatCard } from "@/components/ui/stat-card"
 import { ResponsiveBar } from "@nivo/bar"
@@ -18,10 +19,14 @@ import {
 import { Button } from "./ui/button"
 import { Wallet, Zap, TrendingUp, DollarSign } from "lucide-react"
 
+import { IoWalletSharp } from "react-icons/io5";
+import { MdEnergySavingsLeaf } from "react-icons/md"
+import { FaGauge, FaGaugeHigh } from "react-icons/fa6"
 
-// One "layout item" per grid box: x/y are grid-cell coordinates,
-// w/h are how many columns/rows it spans. i must match a rendered child's key.
-const layouts = {
+const STORAGE_KEY = "layout-power"
+
+
+const defaultLayouts: ResponsiveLayouts = {
   lg: [
     { i: "energy-cost", x: 0, y: 0, w: 3, h: 2 },
     { i: "energy-consumption", x: 3, y: 0, w: 3, h: 2 },
@@ -71,7 +76,21 @@ const stationPowerUsageData = [
 ]
 
 export function DashboardGridDemo() {
-  const { width, containerRef, mounted } = useContainerWidth()
+  const [layouts, setLayouts] = useLocalStorage<ResponsiveLayouts>(STORAGE_KEY, defaultLayouts)
+  const { width, containerRef, mounted } = useContainerWidth({
+    measureBeforeMount: true,
+  })
+
+  const handleLayoutChange = (_currentLayout: readonly LayoutItem[], allLayouts: ResponsiveLayouts) => {
+    setLayouts(allLayouts);
+  }
+
+
+  // Power usage data
+  // Cost overview data
+  // Station power usage data
+
+
 
   return (
     <div ref={containerRef}>
@@ -84,6 +103,7 @@ export function DashboardGridDemo() {
           rowHeight={80}
           margin={[16, 16]}
           onWidthChange={(containerWidth, margin, cols) => console.log({ containerWidth, cols })}
+          onLayoutChange={handleLayoutChange}
         >
           <div
             key="power-usage"
@@ -182,7 +202,7 @@ export function DashboardGridDemo() {
                   <TableHead className="w-[100px]">Station Name</TableHead>
                   <TableHead>KPI</TableHead>
                   <TableHead>KWH</TableHead>
-                  <TableHead className="text-right">Bounce Rate</TableHead>
+                  <TableHead className="text-right">Energy Rate</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
