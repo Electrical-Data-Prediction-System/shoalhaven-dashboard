@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 type StatCardProps = React.ComponentProps<typeof Card> & {
   description: string
   value: string
-  icon: LucideIcon
+  icon: IconType
   trendValue: string
   trendPositive?: boolean
   footerText?: string

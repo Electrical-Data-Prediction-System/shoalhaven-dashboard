@@ -1,4 +1,4 @@
-import { useRef, useSyncExternalStore } from "react";
+import { useMemo, useRef, useSyncExternalStore } from "react";
 
 const subscribe = (callback: () => void) => {
     window.addEventListener("storage", callback);
@@ -38,14 +38,14 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T)
 
     const getServerSnapshot = () => JSON.stringify(initialValue);
     const storeString = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-    let value: T;
-
-    try {
-        value = JSON.parse(storeString) as T;
-    } catch (error) {
-        console.warn(`Resetting corrupted storage payload for key: ${key}`);
-        value = initialValue;   
-    }
+    const value = useMemo(() => {
+        try {
+            return JSON.parse(storeString) as T;
+        } catch (error) {
+            console.warn(`Resetting corrupted storage payload for key: ${key}`);
+            return initialValue;
+        }
+    }, [storeString]);
 
   const setValue = (newValue: T) => {
     try {
