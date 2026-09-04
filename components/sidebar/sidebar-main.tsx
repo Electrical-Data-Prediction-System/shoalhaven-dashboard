@@ -18,6 +18,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import type { WidgetType } from "@/lib/widget-registry"
 
 export function SidebarMain({
   items,
@@ -30,6 +31,7 @@ export function SidebarMain({
     items?: {
       title: string
       url: string
+      widgetType?: WidgetType
     }[]
   }[]
 }) {
@@ -57,7 +59,17 @@ export function SidebarMain({
               <SidebarMenuSub>
                 {item.items?.map((subItem) => (
                   <SidebarMenuSubItem key={subItem.title}>
-                    <SidebarMenuSubButton render={<Link href={subItem.url} />}>
+                    <SidebarMenuSubButton
+                      render={<Link href={subItem.url} />}
+                      draggable={!!subItem.widgetType}
+                      unselectable={subItem.widgetType ? "on" : undefined}
+                      className={subItem.widgetType ? "cursor-grab active:cursor-grabbing" : undefined}
+                      onDragStart={
+                        subItem.widgetType
+                          ? (e) => e.dataTransfer.setData("application/x-widget-type", subItem.widgetType!)
+                          : undefined
+                      }
+                    >
                       <span>{subItem.title}</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>

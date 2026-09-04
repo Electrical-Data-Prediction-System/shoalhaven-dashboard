@@ -1,6 +1,12 @@
 import { DashboardGridDemo } from "@/components/dashboard-grid-demo";
+import { FormatPowerData } from "@/lib/format-data";
+import { MonthRange } from "@/lib/month-format";
 
-export default function Home() {
+const MONTHS = MonthRange(2025, 1, 10);
+
+export default async function Home() {
+  const powerUsageData = await FormatPowerData(MONTHS);
+
   return (
     <div className="relative">
       <div
@@ -8,7 +14,7 @@ export default function Home() {
         style={{ backgroundImage: "var(--gradient-primary)" }}
       />
       <div className="relative p-4 pb-8">
-        <DashboardGridDemo />
+        <DashboardGridDemo powerUsageData={powerUsageData} />
       </div>
     </div>
   );
