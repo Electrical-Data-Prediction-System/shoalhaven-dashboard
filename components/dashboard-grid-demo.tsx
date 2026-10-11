@@ -1,6 +1,6 @@
 "use client"
 
-import { Layout, ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from "react-grid-layout"
+import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from "react-grid-layout"
 import { useLocalStorage } from "@/hooks/useLocalStorage"
 import "react-grid-layout/css/styles.css"
 import { StatCard } from "@/components/widget/stat-card"
@@ -13,7 +13,9 @@ import { FaGaugeHigh } from "react-icons/fa6"
 import { FaDollarSign } from "react-icons/fa"
 import { type SeriesData } from "./widget/line-graph"
 import { WIDGET_REGISTRY, WidgetType, WidgetProps } from "@/lib/widget-registry"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useWidgetContext } from "@/contexts/widget-context"
+import { cn } from "@/lib/utils"
 
 const STORAGE_KEY = "layout-power"
 
@@ -37,10 +39,6 @@ function RenderWidget<T extends WidgetType>({ type, props }: { type: T; props: W
   // T is generic here, so TS can't correlate Widget's props with WidgetProps[T] — callers are still type-checked, since T resolves to a concrete literal there.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return <Widget {...(props as any)} />;
-}
-
-function IsWidget(value: string): value is WidgetType{
-  return value in WIDGET_REGISTRY;
 }
 
 // Only compare the fields we actually store — the library's reported layouts carry extra
@@ -67,7 +65,7 @@ export function DashboardGridDemo({ powerUsageData }: { powerUsageData: SeriesDa
   const { width, containerRef, mounted } = useContainerWidth({
     measureBeforeMount: true,
   })
-  
+
   // LOCAL STORAGE STORE WIDGET POSITION
   const [layouts, setLayouts] = useLocalStorage<ResponsiveLayouts>(STORAGE_KEY, defaultLayouts)
   const pendingLayoutChange = useRef<number | null>(null)
@@ -79,10 +77,8 @@ export function DashboardGridDemo({ powerUsageData }: { powerUsageData: SeriesDa
       setLayouts(allLayouts)
     })
   }
- 
 
-
-
+    
   //DEFINE WIDGET TYPES AND PROP TYPES
   const widgetIds: WidgetType[] = ["power-usage", "cost-overview", "station-power-usage"]
   const widgetProps: WidgetProps = {
@@ -91,42 +87,33 @@ export function DashboardGridDemo({ powerUsageData }: { powerUsageData: SeriesDa
     "station-power-usage": {},
   }
 
+  //CONTEXT
+  const { highlightedId } = useWidgetContext()
 
-  //STATE TO UPDATE WIDGET LIST
-  const [activeWidgets, setActiveWidgets] = useState<{ id: string; type: WidgetType}[]>([
-    { id: "power-usage", type: "power-usage" },
-    { id: "cost-overview", type: "cost-overview" },
-    { id: "station-power-usage", type: "station-power-usage" },
-  ])
+  useEffect(() => {
+    if(!highlightedId) return
 
-  // Bumped after a successful drop to force ResponsiveGridLayout to fully remount —
-  // works around a timing race in the library's internal state sync where a newly
-  // added child can briefly reconcile against a stale layout snapshot and get reset
-  // to a 1x1 fallback size before catching up to the correct one.
-  const [gridInstanceKey, setGridInstanceKey] = useState(0)
+    document
+      .querySelector(`[data-widget-id="${highlightedId}"]`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center"})
+  }, [highlightedId])
 
-  const handleDrop = (_layout: Layout, item: LayoutItem | undefined, e: Event) => {
-    if (!item) return
-    const dt = (e as DragEvent).dataTransfer
-    const widgetType = dt?.getData("application/x-widget-type")
-    if (!widgetType || !IsWidget(widgetType)) return
+  // Lets the scroll effect find the element, and rings it while it's the highlighted one
+  const highlightProps = (id: string) => ({
+    "data-widget-id": id,
+    className: cn(
+      "rounded-xl transition-shadow duration-300",
+      highlightedId === id && "ring-2 ring-blue-500"
+    ),
+  })
 
-    const id = crypto.randomUUID()
-    const { defaultSize } = WIDGET_REGISTRY[widgetType]
-
-    setActiveWidgets((prev) => [...prev, { id: id, type: widgetType }])
-    setLayouts({
-      ...layouts,
-      lg: [...(layouts.lg ?? []), { i: id, x: item.x, y: item.y, w: defaultSize.w, h: defaultSize.h, static: false, isDraggable: true, moved: false }],
-    })
-    setGridInstanceKey((k) => k + 1)
-  }
+  // Blocks text selection only mid-drag, so dragging doesn't select text across widgets
+  const [isDragging, setIsDragging] = useState(false)
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} className={cn(isDragging && "select-none")}>
       {mounted && (
         <ResponsiveGridLayout
-          key={gridInstanceKey}
           width={width}
           layouts={layouts}
           breakpoints={{ lg: 1024, md: 768, sm: 480 }}
@@ -135,14 +122,16 @@ export function DashboardGridDemo({ powerUsageData }: { powerUsageData: SeriesDa
           margin={[16, 16]}
           onWidthChange={(containerWidth, margin, cols) => console.log({ containerWidth, cols })}
           onLayoutChange={handleLayoutChange}
-
-          dropConfig={{ enabled: true, defaultItem: { w: 2, h: 2}}}
-          onDrop={handleDrop}
+          onDragStart={() => {
+            setIsDragging(true)
+            window.getSelection()?.removeAllRanges()
+          }}
+          onDragStop={() => setIsDragging(false)}
         >
 
           {/* DYNAMICALLY LOADING WIDGET FROM LIST */}
-          {activeWidgets.map(({ id, type }) => (
-            <div key={id}>
+          {widgetIds.map((type) => (
+            <div key={type} {...highlightProps(type)}>
               <RenderWidget type={type} props={widgetProps[type]} />
             </div>
           ))}
@@ -152,6 +141,7 @@ export function DashboardGridDemo({ powerUsageData }: { powerUsageData: SeriesDa
           {/* energy cost*/}
           <StatCard
             key="energy-cost"
+            {...highlightProps("energy-cost")}
             description="Energy Cost"
             value="$2,473 KWH"
             icon={IoWalletSharp}
@@ -162,6 +152,7 @@ export function DashboardGridDemo({ powerUsageData }: { powerUsageData: SeriesDa
           {/* energy consumption */}
           <StatCard
             key="energy-consumption"
+            {...highlightProps("energy-consumption")}
             description="Energy Consumption"
             value="1,231 KWH"
             icon={MdEnergySavingsLeaf}
@@ -172,6 +163,7 @@ export function DashboardGridDemo({ powerUsageData }: { powerUsageData: SeriesDa
           {/* peak load */}
           <StatCard
             key="peak-load"
+            {...highlightProps("peak-load")}
             description="Peak Load"
             value="320 KWH"
             icon={FaGaugeHigh}
@@ -182,6 +174,7 @@ export function DashboardGridDemo({ powerUsageData }: { powerUsageData: SeriesDa
           {/* current load*/}
           <StatCard
             key="current-load"
+            {...highlightProps("current-load")}
             description="Total Revenue"
             value="$100,000"
             icon={FaDollarSign}

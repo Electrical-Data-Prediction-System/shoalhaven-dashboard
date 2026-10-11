@@ -18,7 +18,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import type { WidgetType } from "@/lib/widget-registry"
+import { useWidgetContext } from "@/contexts/widget-context"
 
 export function SidebarMain({
   items,
@@ -31,10 +31,13 @@ export function SidebarMain({
     items?: {
       title: string
       url: string
-      widgetType?: WidgetType
+      widgetId?: string
     }[]
   }[]
 }) {
+  const { highlight } = useWidgetContext()
+
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -59,16 +62,13 @@ export function SidebarMain({
               <SidebarMenuSub>
                 {item.items?.map((subItem) => (
                   <SidebarMenuSubItem key={subItem.title}>
-                    <SidebarMenuSubButton
-                      render={<Link href={subItem.url} />}
-                      draggable={!!subItem.widgetType}
-                      unselectable={subItem.widgetType ? "on" : undefined}
-                      className={subItem.widgetType ? "cursor-grab active:cursor-grabbing" : undefined}
-                      onDragStart={
-                        subItem.widgetType
-                          ? (e) => e.dataTransfer.setData("application/x-widget-type", subItem.widgetType!)
-                          : undefined
-                      }
+                    <SidebarMenuSubButton 
+                    render={<Link href={subItem.url} />}
+                    onDoubleClick={(e) => {
+                      if(!subItem.widgetId) return
+                      e.preventDefault()
+                      highlight(subItem.widgetId)
+                    }}
                     >
                       <span>{subItem.title}</span>
                     </SidebarMenuSubButton>
