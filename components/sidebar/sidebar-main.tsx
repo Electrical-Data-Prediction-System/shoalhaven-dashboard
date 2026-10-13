@@ -18,7 +18,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import type { WidgetType } from "@/lib/widget-registry"
+import type { WidgetType } from "@/components/widget/widgets"
 
 export function SidebarMain({
   items,

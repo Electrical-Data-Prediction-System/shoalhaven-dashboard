@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import { SidebarMain } from "./sidebar-main"
-import type { WidgetType } from "@/lib/widget-registry"
+import type { WidgetType } from "@/components/widget/widgets"
 
 const navMain = [
   {
