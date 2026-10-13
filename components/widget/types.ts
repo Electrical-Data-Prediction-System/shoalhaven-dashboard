@@ -1,0 +1,44 @@
+import type { ReactNode } from "react"
+import type { ApiSeries } from "@/lib/chart-data"
+
+export type WidgetSize = { w: number; h: number }
+
+type WidgetBase = {
+  /** Title rendered by the widget shell */
+  title: string
+  /** Default size used when the widget is dropped onto the grid */
+  defaultSize: WidgetSize
+  /** Adds `overflow-hidden` to the shell for widgets that clip their content */
+  overflow?: "hidden" | "visible"
+  // TODO: enforce minSize / maxSize while resizing
+  minSize?: WidgetSize
+  maxSize?: WidgetSize
+}
+
+/** A widget that fetches its own data before rendering */
+export type DataWidget = WidgetBase & {
+  load: () => Promise<ApiSeries>
+  render: (data: ApiSeries) => ReactNode
+}
+
+/** A widget with no data source. */
+export type StaticWidget = WidgetBase & {
+  render: () => ReactNode
+}
+
+export type WidgetDefinition = DataWidget | StaticWidget
+
+/** Narrows a definition to the data-fetching variant */
+export function isDataWidget(def: WidgetDefinition): def is DataWidget {
+  return "load" in def
+}
+
+/** Position + size of a placed widget, matching react-grid-layout items */
+export type WidgetLayout = { x: number; y: number; w: number; h: number }
+
+/** A widget instance placed on the dashboard (persisted to storage) */
+export type PlacedWidget<TType extends string = string> = {
+  id: string
+  type: TType
+  layout: WidgetLayout
+}
