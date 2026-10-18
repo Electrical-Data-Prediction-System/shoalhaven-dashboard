@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import { SidebarMain } from "./sidebar-main"
+import type { WidgetType } from "@/components/widget/widgets"
 
 const navMain = [
   {
@@ -35,7 +36,7 @@ const navMain = [
       {
         title: "Energy Cost",
         url: "#",
-        widgetId: "energy-cost"
+        widgetType: "energy-cost" as const satisfies WidgetType,
       },
       {
         title: "Energy Consumption",
@@ -55,16 +56,17 @@ const navMain = [
       {
         title: "Power Usage Overview",
         url: "#",
-        widgetId: "power-usage"
+        widgetType: "meter-power-usage" as const satisfies WidgetType,
+        widgetId: "meter-power-usage"
       },
       {
         title: "Cost Overview",
         url: "#",
-        widgetId: "cost-overview"
       },
       {
         title: "Station Usage",
         url: "#",
+        widgetType: "station-power-usage" as const satisfies WidgetType,
         widgetId: "station-power-usage"
       },
     ],
