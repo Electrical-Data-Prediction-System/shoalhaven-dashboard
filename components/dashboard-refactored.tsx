@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ResponsiveGridLayout,
   useContainerWidth,
@@ -19,6 +19,8 @@ import type { PlacedWidget } from "@/components/widget/types"
 import { WidgetShell } from "@/components/widget/widget-shell"
 import { WIDGETS, type WidgetType } from "@/components/widget/widgets"
 import { useLocalStorage } from "@/hooks/useLocalStorage"
+import { useWidgetContext } from "@/contexts/widget-context"
+import { cn } from "@/lib/utils"
 
 const STORAGE_KEY = "dashboard.widgets"
 
@@ -108,8 +110,31 @@ export function DashboardGrid() {
     setGridInstanceKey((key) => key + 1)
   }
 
+  //CONTEXT
+  const { highlightedId } = useWidgetContext()
+
+  useEffect(() => {
+    if(!highlightedId) return
+
+    document
+      .querySelector(`[data-widget-id="${highlightedId}"]`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center"})
+  }, [highlightedId])
+
+  // Lets the scroll effect find the element, and rings it while it's the highlighted one
+  const highlightProps = (id: string) => ({
+    "data-widget-id": id,
+    className: cn(
+      "rounded-xl transition-shadow duration-300",
+      highlightedId === id && "ring-2 ring-blue-500"
+    ),
+  })
+
+  // Blocks text selection only mid-drag, so dragging doesn't select text across widgets
+  const [isDragging, setIsDragging] = useState(false)
+
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} className={cn(isDragging && "select-none")}>
       {mounted && (
         <ResponsiveGridLayout
           key={gridInstanceKey}
@@ -122,15 +147,21 @@ export function DashboardGrid() {
           onLayoutChange={handleLayoutChange}
           dropConfig={{ enabled: true, defaultItem: { w: 2, h: 2 } }}
           onDrop={handleDrop}
+          onDragStart={() => {
+            setIsDragging(true)
+            window.getSelection()?.removeAllRanges()
+          }}
+          onDragStop={() => setIsDragging(false)}
         >
           {validPlaced.map((placed) => (
-            <div key={placed.id}>
+            <div key={placed.id} {...highlightProps(placed.id)}>
               <WidgetShell def={WIDGETS[placed.type]} />
             </div>
           ))}
 
           <StatCard
             key="energy-consumption"
+            {...highlightProps("energy-consumption")}
             description="Energy Consumption"
             value="1,231 KWH"
             icon={MdEnergySavingsLeaf}
@@ -139,6 +170,7 @@ export function DashboardGrid() {
           />
           <StatCard
             key="peak-load"
+            {...highlightProps("peak-load")}
             description="Peak Load"
             value="320 KWH"
             icon={FaGaugeHigh}
@@ -147,6 +179,7 @@ export function DashboardGrid() {
           />
           <StatCard
             key="current-load"
+            {...highlightProps("current-load")}
             description="Total Revenue"
             value="$100,000"
             icon={FaDollarSign}

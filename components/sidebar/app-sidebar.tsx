@@ -36,33 +36,38 @@ const navMain = [
       {
         title: "Energy Cost",
         url: "#",
+        widgetType: "energy-cost" as const satisfies WidgetType,
       },
       {
         title: "Energy Consumption",
         url: "#",
+        widgetId: "energy-consumption"
       },
       {
         title: "Peak Load",
         url: "#",
+        widgetId: "peak-load"
       },
       {
         title: "Total Revenue",
         url: "#",
+        widgetId: "current-load"
       },
       {
         title: "Power Usage Overview",
         url: "#",
-        widgetType: "power-usage" as const satisfies WidgetType,
+        widgetType: "meter-power-usage" as const satisfies WidgetType,
+        widgetId: "meter-power-usage"
       },
       {
         title: "Cost Overview",
         url: "#",
-        widgetType: "cost-overview" as const satisfies WidgetType,
       },
       {
         title: "Station Usage",
         url: "#",
         widgetType: "station-power-usage" as const satisfies WidgetType,
+        widgetId: "station-power-usage"
       },
     ],
   },
