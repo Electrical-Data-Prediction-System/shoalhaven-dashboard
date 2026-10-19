@@ -107,140 +107,147 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
   };
 
   return (
-      <div className="modal-content" >
-        <h2 className="text-lg font-semibold mb-4">{initialWidget ? "Edit widget" : "Create widget"}</h2>
-        <form
-          onSubmit={onSubmit}
-          className="grid grid-cols-[150px_1fr] gap-4 items-center max-w-lg space-y-1"
-        >
-          {/* Name */}
-          <label htmlFor="name">Name</label>
-
+    <div className="modal-content max-h-[calc(100dvh-4rem)] overflow-y-auto">
+      <div className="mb-5 border-b border-border pb-4">
+        <h2 className="text-xl font-semibold tracking-tight">
+          {initialWidget ? "Edit chart" : "Create chart"}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Choose what to show and which meter to use.
+        </p>
+      </div>
+      <form onSubmit={onSubmit} className="space-y-4 pl-2 pr-2">
+        <div className="space-y-1.5">
+          <label htmlFor="name" className="text-sm font-medium">Chart name</label>
           <Input
             id="name"
             name="name"
             placeholder="e.g. Energy Consumption"
             defaultValue={initialWidget?.name}
             required
+            className="h-10 bg-background"
           />
+        </div>
 
-          {/* Type */}
-          <label>Type</label> 
-
-              <Select name="type" defaultValue={initialWidget?.type} required>
-                <SelectTrigger className="w-full" >
-                  <SelectValue placeholder="Select widget type" className="capitalize" />
-                </SelectTrigger>
-                <SelectContent className="pointer-events-auto">
-                  <SelectItem value="line">Line</SelectItem>
-                  <SelectItem value="area">Area</SelectItem>
-                  <SelectItem value="bar">Bar</SelectItem>
-                  <SelectItem value="pie">Pie</SelectItem>
-                  <SelectItem value="datatable">Data Table</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <label>Data mode</label>
-              <Select
-                name="dataMode"
-                defaultValue={initialWidget?.dataMode ?? "aggregate"}
-                onValueChange={(value) => setDataMode(value as WidgetFormConfig["dataMode"])}
-                required
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choose data mode" className="capitalize" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="aggregate">Aggregated totals</SelectItem>
-                  <SelectItem value="readings">Raw readings</SelectItem>
-                </SelectContent>
-              </Select>
-
-            <label htmlFor="location-search">Search location</label>
-            <div className="space-y-1">
-              <Input
-                id="location-search"
-                value={locationQuery}
-                onChange={(event) => {
-                  const value = event.target.value
-                  setLocationQuery(value)
-                  if (value.trim().length < 2) {
-                    setMeters([])
-                    setIsSearching(false)
-                    setSearchError(null)
-                  }
-                }}
-                placeholder="Address, suburb, postcode, or region"
-                autoComplete="off"
-              />
-              {isSearching && <p className="text-sm text-muted-foreground">Searching meters...</p>}
-              {searchError && <p className="text-sm text-destructive">{searchError}</p>}
-              {!isSearching && !searchError && locationQuery.trim().length >= 2 && meters.length === 0 && (
-                <p className="text-sm text-muted-foreground">No meters found.</p>
-              )}
-            </div>
-
-            <label htmlFor="meterId">Meter</label>
-            <Select name="meterId" defaultValue={initialWidget?.meterId} required>
-              <SelectTrigger id="meterId" className="w-full">
-                <SelectValue placeholder={meters.length ? "Select a meter" : "Search for a location first"} />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <label htmlFor="type" className="text-sm font-medium">Chart type</label>
+            <Select name="type" defaultValue={initialWidget?.type} required>
+              <SelectTrigger id="type" className="h-10 w-full bg-background">
+                <SelectValue placeholder="Select type" />
               </SelectTrigger>
-              <SelectContent className="w-full">
-                {meters.map((meter) => (
-                  <SelectItem key={meter._id} value={meter._id}>
-                    {meter.location.fullAddress} ({meter._id})
-                  </SelectItem>
-                ))}
+              <SelectContent className="pointer-events-auto">
+                <SelectItem value="line">Line</SelectItem>
+                <SelectItem value="area">Area</SelectItem>
+                <SelectItem value="bar">Bar</SelectItem>
+                <SelectItem value="pie">Pie</SelectItem>
               </SelectContent>
             </Select>
-
-            {/* Aggregation interval or raw-reading lookback */}
-            <label>{dataMode === "aggregate" ? "Bucket interval" : "Readings range"}</label>
-
-              <Select
-                name="timePeriod"
-                value={selectedTimePeriod}
-                onValueChange={(value) => setTimePeriod(value as WidgetFormConfig["timePeriod"])}
-                modal={false}
-                required
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select time period" className="capitalize" />
-                </SelectTrigger>
-                <SelectContent >
-                    {dataMode === "aggregate" ? (
-                      <>
-                        <SelectItem value="5m">Every 5 minutes</SelectItem>
-                        <SelectItem value="week">Every week</SelectItem>
-                        <SelectItem value="month">Every month</SelectItem>
-                        <SelectItem value="year">Every year</SelectItem>
-                      </>
-                    ) : (
-                      <>
-                        <SelectItem value="day">Last day</SelectItem>
-                        <SelectItem value="week">Last week</SelectItem>
-                        <SelectItem value="month">Last month</SelectItem>
-                        <SelectItem value="year">Last year</SelectItem>
-                      </>
-                    )}
-                </SelectContent>
-              </Select>
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-2 col-span-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => closeModal()}
-            >
-              Cancel
-            </Button>
-
-            <Button type="submit">
-              {initialWidget ? "Save changes" : "Create Widget"}
-            </Button>
           </div>
-        </form>
-      </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="dataMode" className="text-sm font-medium">Data mode</label>
+            <Select
+              name="dataMode"
+              defaultValue={initialWidget?.dataMode ?? "aggregate"}
+              onValueChange={(value) => setDataMode(value as WidgetFormConfig["dataMode"])}
+              required
+            >
+              <SelectTrigger id="dataMode" className="h-10 w-full bg-background">
+                <SelectValue placeholder="Choose data mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="aggregate">Aggregated totals</SelectItem>
+                <SelectItem value="readings">Raw readings</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="location-search" className="text-sm font-medium">Search location</label>
+          <Input
+            id="location-search"
+            value={locationQuery}
+            onChange={(event) => {
+              const value = event.target.value
+              setLocationQuery(value)
+              if (value.trim().length < 2) {
+                setMeters([])
+                setIsSearching(false)
+                setSearchError(null)
+              }
+            }}
+            placeholder="Address, suburb, postcode, or region"
+            autoComplete="off"
+            className="h-10 bg-background"
+          />
+          {isSearching && <p className="text-xs text-muted-foreground">Searching meters...</p>}
+          {searchError && <p className="text-xs text-destructive">{searchError}</p>}
+          {!isSearching && !searchError && locationQuery.trim().length >= 2 && meters.length === 0 && (
+            <p className="text-xs text-muted-foreground">No meters found.</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="meterId" className="text-sm font-medium">Meter</label>
+          <Select name="meterId" defaultValue={initialWidget?.meterId} required>
+            <SelectTrigger id="meterId" className="h-10 w-full bg-background">
+              <SelectValue placeholder={meters.length ? "Select a meter" : "Search for a location first"} />
+            </SelectTrigger>
+            <SelectContent className="w-full">
+              {meters.map((meter) => (
+                <SelectItem key={meter._id} value={meter._id}>
+                  {meter.location.fullAddress} ({meter._id})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="timePeriod" className="text-sm font-medium">
+            {dataMode === "aggregate" ? "Bucket interval" : "Readings range"}
+          </label>
+          <Select
+            name="timePeriod"
+            value={selectedTimePeriod}
+            onValueChange={(value) => setTimePeriod(value as WidgetFormConfig["timePeriod"])}
+            modal={false}
+            required
+          >
+            <SelectTrigger id="timePeriod" className="h-10 w-full bg-background">
+              <SelectValue placeholder="Select time period" />
+            </SelectTrigger>
+            <SelectContent>
+              {dataMode === "aggregate" ? (
+                <>
+                  <SelectItem value="5m">Every 5 minutes</SelectItem>
+                  <SelectItem value="week">Every week</SelectItem>
+                  <SelectItem value="month">Every month</SelectItem>
+                  <SelectItem value="year">Every year</SelectItem>
+                </>
+              ) : (
+                <>
+                  <SelectItem value="day">Last day</SelectItem>
+                  <SelectItem value="week">Last week</SelectItem>
+                  <SelectItem value="month">Last month</SelectItem>
+                  <SelectItem value="year">Last year</SelectItem>
+                </>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <Button type="button" className="cursor-pointer" variant="outline" onClick={() => closeModal()}>
+            Cancel
+          </Button>
+          <Button type="submit" className="cursor-pointer">
+            {initialWidget ? "Save changes" : "Create chart"}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
