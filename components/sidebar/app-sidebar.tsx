@@ -135,7 +135,7 @@ export function AppSidebar() {
           <SidebarMenu>
 
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => openModal(<WidgetForm />)}>
+              <SidebarMenuButton className="cursor-pointer" onClick={() => openModal(<WidgetForm />)}>
                 <Plus />
                 <span>Create Widget</span>
               </SidebarMenuButton>

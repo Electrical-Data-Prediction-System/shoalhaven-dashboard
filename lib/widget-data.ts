@@ -1,7 +1,6 @@
 import { GetAggregatedMeterPower, GetLatestReadingTimestamp, GetReadingsBetween } from "@/lib/api"
 import type { WidgetFormConfig } from "@/contexts/widget-context"
-import type { NivoSerie } from "@/lib/chart-data"
-import { toNivoSeries } from "@/lib/chart-data"
+import { toChartRows, type ChartRow } from "@/lib/chart-data"
 
 function getStartDate(period: WidgetFormConfig["timePeriod"], end: Date) {
   const start = new Date(end)
@@ -27,21 +26,18 @@ function getStartDate(period: WidgetFormConfig["timePeriod"], end: Date) {
   return start
 }
 
-export async function loadWidgetData(config: WidgetFormConfig): Promise<NivoSerie[]> {
+export async function loadWidgetData(config: WidgetFormConfig): Promise<ChartRow[]> {
   if (config.dataMode === "aggregate") {
     const interval = config.timePeriod === "day" ? "month" : config.timePeriod
     const response = await GetAggregatedMeterPower(config.meterId, undefined, undefined, interval)
-    return toNivoSeries(response)
+    return toChartRows(response)
   }
 
   const latestTimestamp = await GetLatestReadingTimestamp(config.meterId)
-  if (!latestTimestamp) return [{ id: "KWH", data: [] }]
+  if (!latestTimestamp) return []
 
   const end = new Date(latestTimestamp)
   const start = getStartDate(config.timePeriod, end)
   const readings = await GetReadingsBetween(config.meterId, start, end)
-  return [{
-    id: "KWH",
-    data: readings.map(({ timestamp, kwh }) => ({ x: timestamp, y: kwh })),
-  }]
+  return readings.map(({ timestamp, kwh }) => ({ x: timestamp, kwh }))
 }

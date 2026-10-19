@@ -5,14 +5,19 @@ import { useLocalStorage } from "@/hooks/useLocalStorage"
 
 export type WidgetFormConfig = {
     name: string
-    type: "line" | "bar" | "pie" | "datatable"
+    type: "line" | "area" | "bar" | "pie" | "datatable"
     dataMode: "aggregate" | "readings"
     timePeriod: "5m" | "day" | "week" | "month" | "year"
     meterId: string
 }
 
 export type CreatedWidgetLayout = { x: number; y: number; w: number; h: number }
-export type CreatedWidget = WidgetFormConfig & { id: string; layout?: CreatedWidgetLayout }
+export type CreatedWidget = WidgetFormConfig & {
+    id: string
+    layout?: CreatedWidgetLayout
+    ratesByPeriod?: Record<string, number>
+    seriesColor?: string
+}
 
 type GridPosition = { i: string; x: number; y: number; w: number; h: number }
 
@@ -22,6 +27,8 @@ type WidgetContextValue = {
     createdWidgets: CreatedWidget[]
     onCreateWidget: (config: WidgetFormConfig) => CreatedWidget
     updateCreatedWidget: (id: string, config: WidgetFormConfig) => void
+    updateCreatedWidgetRates: (id: string, rates: Record<string, number>) => void
+    updateCreatedWidgetColor: (id: string, color: string) => void
     deleteCreatedWidget: (id: string) => void
     updateCreatedWidgetLayouts: (items: readonly GridPosition[]) => void
 }
@@ -58,6 +65,18 @@ export function WidgetProvider({ children }: { children : ReactNode})
         ))
     }
 
+    const updateCreatedWidgetRates = (id: string, rates: Record<string, number>) => {
+        setCreatedWidgets(createdWidgets.map((widget) =>
+            widget.id === id ? { ...widget, ratesByPeriod: rates } : widget
+        ))
+    }
+
+    const updateCreatedWidgetColor = (id: string, color: string) => {
+        setCreatedWidgets(createdWidgets.map((widget) =>
+            widget.id === id ? { ...widget, seriesColor: color } : widget
+        ))
+    }
+
     const deleteCreatedWidget = (id: string) => {
         setCreatedWidgets(createdWidgets.filter((widget) => widget.id !== id))
     }
@@ -83,6 +102,8 @@ export function WidgetProvider({ children }: { children : ReactNode})
             createdWidgets,
             onCreateWidget,
             updateCreatedWidget,
+            updateCreatedWidgetRates,
+            updateCreatedWidgetColor,
             deleteCreatedWidget,
             updateCreatedWidgetLayouts,
         }}>

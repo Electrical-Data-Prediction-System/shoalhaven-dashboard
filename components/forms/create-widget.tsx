@@ -108,10 +108,10 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
 
   return (
       <div className="modal-content" >
-        <h2 className="text-lg font-semibold">{initialWidget ? "Edit widget" : "Create widget"}</h2>
+        <h2 className="text-lg font-semibold mb-4">{initialWidget ? "Edit widget" : "Create widget"}</h2>
         <form
           onSubmit={onSubmit}
-          className="grid grid-cols-[150px_1fr] gap-4 items-center max-w-lg space-y-6"
+          className="grid grid-cols-[150px_1fr] gap-4 items-center max-w-lg space-y-1"
         >
           {/* Name */}
           <label htmlFor="name">Name</label>
@@ -129,10 +129,11 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
 
               <Select name="type" defaultValue={initialWidget?.type} required>
                 <SelectTrigger className="w-full" >
-                  <SelectValue placeholder="Select widget type" />
+                  <SelectValue placeholder="Select widget type" className="capitalize" />
                 </SelectTrigger>
                 <SelectContent className="pointer-events-auto">
                   <SelectItem value="line">Line</SelectItem>
+                  <SelectItem value="area">Area</SelectItem>
                   <SelectItem value="bar">Bar</SelectItem>
                   <SelectItem value="pie">Pie</SelectItem>
                   <SelectItem value="datatable">Data Table</SelectItem>
@@ -147,7 +148,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
                 required
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choose data mode" />
+                  <SelectValue placeholder="Choose data mode" className="capitalize" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="aggregate">Aggregated totals</SelectItem>
@@ -204,7 +205,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
                 required
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select time period" />
+                  <SelectValue placeholder="Select time period" className="capitalize" />
                 </SelectTrigger>
                 <SelectContent >
                     {dataMode === "aggregate" ? (
