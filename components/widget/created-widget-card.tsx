@@ -77,8 +77,14 @@ export function CreatedWidgetCard({ widget }: { widget: CreatedWidget }) {
 
   return (
     <section className="flex h-full flex-col rounded-xl border bg-card p-4 shadow-sm">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="truncate text-sm font-semibold">{widget.name}</h3>
+      <div className="mb-3 flex items-center justify-between gap-2 border-b border-border/70 pb-2.5">
+        <h3
+          className="flex min-w-0 items-center gap-2 text-base font-semibold leading-tight tracking-tight"
+          title={widget.name}
+        >
+          <span aria-hidden="true" className="h-5 w-1 shrink-0 rounded-full bg-primary/70" />
+          <span className="truncate">{widget.name}</span>
+        </h3>
         <div className="flex shrink-0 items-center gap-1">
           <Button
             type="button"
