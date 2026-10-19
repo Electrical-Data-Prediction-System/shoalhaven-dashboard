@@ -17,6 +17,7 @@ import { MdEnergySavingsLeaf } from "react-icons/md"
 import { StatCard } from "@/components/widget/stat-card"
 import type { PlacedWidget } from "@/components/widget/types"
 import { WidgetShell } from "@/components/widget/widget-shell"
+import { CreatedWidgetCard } from "@/components/widget/created-widget-card"
 import { WIDGETS, type WidgetType } from "@/components/widget/widgets"
 import { useLocalStorage } from "@/hooks/useLocalStorage"
 import { useWidgetContext } from "@/contexts/widget-context"
@@ -44,6 +45,7 @@ export function DashboardGrid() {
 
   // The placed widgets — which ones exist, plus their size and position.
   const [placed, setPlaced] = useLocalStorage<PlacedWidget<WidgetType>[]>(STORAGE_KEY, DEFAULT_PLACED)
+  const { highlightedId, createdWidgets, updateCreatedWidgetLayouts } = useWidgetContext()
 
   // Ignore anything persisted that no longer matches a registered widget.
   const validPlaced = useMemo(() => {
@@ -62,9 +64,13 @@ export function DashboardGrid() {
           w: p.layout.w,
           h: p.layout.h,
         })),
+        ...createdWidgets.map(({ id, layout }, index) => ({
+          i: id,
+          ...(layout ?? { x: 0, y: 10 + index * 4, w: 4, h: 4 }),
+        })),
       ],
     }),
-    [validPlaced],
+    [validPlaced, createdWidgets],
   )
 
   const persistLayout = (items: readonly LayoutItem[]) => {
@@ -76,8 +82,8 @@ export function DashboardGrid() {
       }
       return { ...p, layout: { x: item.x, y: item.y, w: item.w, h: item.h } }
     })
-    if (next.every((p, index) => p === validPlaced[index])) return
-    setPlaced(next)
+    if (next.some((p, index) => p !== validPlaced[index])) setPlaced(next)
+    updateCreatedWidgetLayouts(items)
   }
 
   const handleDrop = (layout: Layout, item: LayoutItem | undefined, e: Event) => {
@@ -88,6 +94,7 @@ export function DashboardGrid() {
 
     const type = raw as WidgetType
     const { defaultSize } = WIDGETS[type]
+    updateCreatedWidgetLayouts(layout)
     const updatedPlaced = validPlaced.map((placedWidget) => {
       const finalItem = layout.find((layoutItem) => layoutItem.i === placedWidget.id)
       if (!finalItem) return placedWidget
@@ -106,9 +113,6 @@ export function DashboardGrid() {
       },
     ])
   }
-
-  //CONTEXT
-  const { highlightedId } = useWidgetContext()
 
   useEffect(() => {
     if(!highlightedId) return
@@ -165,6 +169,12 @@ export function DashboardGrid() {
           {validPlaced.map((placed) => (
             <div key={placed.id} {...highlightProps(placed.id)}>
               <WidgetShell def={WIDGETS[placed.type]} />
+            </div>
+          ))}
+
+          {createdWidgets.map((widget) => (
+            <div key={widget.id} {...highlightProps(widget.id)}>
+              <CreatedWidgetCard widget={widget} />
             </div>
           ))}
 

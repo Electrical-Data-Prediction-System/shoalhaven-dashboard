@@ -44,12 +44,12 @@ export default function RootLayout({
             {/* <SidebarTrigger /> */}
             {children}
           </main>
+          <div id="modal-root" />
+          <Modal />
         </WidgetProvider>
       </SidebarProvider>
       </body>
     </html>
-          <div id="modal-root"/>
-          <Modal />
         </ModalProvider>
   );
 }

@@ -1,10 +1,7 @@
 import { DashboardGrid } from "@/components/dashboard-refactored";
-import WidgetForm from "@/components/forms/create-widget";
-import Modal, { ModalProvider } from "@/components/forms/modal";
 
 export default function Home() {
   return (
-    <ModalProvider>
     <div className="relative">
       <div
         className="absolute inset-x-0 top-0 h-90"
@@ -14,8 +11,5 @@ export default function Home() {
         <DashboardGrid />
       </div>
     </div>
-    <div id="modal-root"></div>
-        <Modal />
-    </ModalProvider>
   );
 }
