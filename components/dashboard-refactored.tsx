@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ResponsiveGridLayout,
   useContainerWidth,
-  type Layout,
   type LayoutItem,
   type ResponsiveLayouts,
 } from "react-grid-layout"
@@ -44,7 +43,6 @@ export function DashboardGrid() {
 
   // The placed widgets — which ones exist, plus their size and position.
   const [placed, setPlaced] = useLocalStorage<PlacedWidget<WidgetType>[]>(STORAGE_KEY, DEFAULT_PLACED)
-  const [gridInstanceKey, setGridInstanceKey] = useState(0)
   const pendingLayoutChange = useRef<number | null>(null)
 
   // Ignore anything persisted that no longer matches a registered widget.
@@ -88,28 +86,6 @@ export function DashboardGrid() {
     })
   }
 
-  const handleDrop = (_layout: Layout, item: LayoutItem | undefined, e: Event) => {
-    if (!item) return
-    const dataTransfer = (e as DragEvent).dataTransfer
-    const raw = dataTransfer?.getData("application/x-widget-type")
-    if (!raw || !(raw in WIDGETS)) return
-
-    const type = raw as WidgetType
-    const { defaultSize } = WIDGETS[type]
-
-    setPlaced([
-      ...validPlaced,
-      {
-        id: crypto.randomUUID(),
-        type,
-        layout: { x: item.x, y: item.y, w: defaultSize.w, h: defaultSize.h },
-      },
-    ])
-    // Force a remount so a freshly dropped widget doesn't reconcile against a
-    // stale layout snapshot (library timing race with newly added children).
-    setGridInstanceKey((key) => key + 1)
-  }
-
   //CONTEXT
   const { highlightedId } = useWidgetContext()
 
@@ -137,7 +113,6 @@ export function DashboardGrid() {
     <div ref={containerRef} className={cn(isDragging && "select-none")}>
       {mounted && (
         <ResponsiveGridLayout
-          key={gridInstanceKey}
           width={width}
           layouts={layouts}
           breakpoints={{ lg: 1024, md: 768, sm: 480 }}
@@ -145,8 +120,6 @@ export function DashboardGrid() {
           rowHeight={80}
           margin={[16, 16]}
           onLayoutChange={handleLayoutChange}
-          dropConfig={{ enabled: true, defaultItem: { w: 2, h: 2 } }}
-          onDrop={handleDrop}
           onDragStart={() => {
             setIsDragging(true)
             window.getSelection()?.removeAllRanges()
