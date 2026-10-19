@@ -9,42 +9,17 @@ import {
 } from "react-grid-layout"
 import "react-grid-layout/css/styles.css"
 
-import { FaDollarSign } from "react-icons/fa"
-import { FaGaugeHigh } from "react-icons/fa6"
-import { MdEnergySavingsLeaf } from "react-icons/md"
-
-import { StatCard } from "@/components/widget/stat-card"
-import type { PlacedWidget } from "@/components/widget/types"
 import { WidgetShell } from "@/components/widget/widget-shell"
 import { CreatedWidgetCard } from "@/components/widget/created-widget-card"
-import { WIDGETS, type WidgetType } from "@/components/widget/widgets"
-import { useLocalStorage } from "@/hooks/useLocalStorage"
-import { useWidgetContext } from "@/contexts/widget-context"
+import { WIDGETS } from "@/components/widget/widgets"
+import { DEFAULT_PLACED, useWidgetContext } from "@/contexts/widget-context"
 import { cn } from "@/lib/utils"
-
-const STORAGE_KEY = "dashboard.widgets"
-
-// Stat cards are pinned for now and live outside the placed-widget system.
-const PINNED_LAYOUTS: LayoutItem[] = [
-  { i: "energy-cost", x: 0, y: 0, w: 3, h: 2 },
-  { i: "energy-consumption", x: 3, y: 0, w: 3, h: 2 },
-  { i: "peak-load", x: 6, y: 0, w: 3, h: 2 },
-  { i: "current-load", x: 9, y: 0, w: 3, h: 2 },
-]
-
-const DEFAULT_PLACED: PlacedWidget<WidgetType>[] = [
-  { id: "meter-power-usage", type: "meter-power-usage", layout: { x: 0, y: 2, w: 6, h: 4 } },
-  // { id: "cost-overview", type: "cost-overview", layout: { x: 6, y: 2, w: 2, h: 4 } },
-  { id: "station-power-usage", type: "station-power-usage", layout: { x: 0, y: 6, w: 4, h: 4 } },
-  // { id: "energy-cost", type: "energy-cost", layout: { x: 2, y: 2, w: 4, h: 4 } } Already a stat card lol
-]
 
 export function DashboardGrid() {
   const { width, containerRef, mounted } = useContainerWidth({ measureBeforeMount: true })
 
   // The placed widgets — which ones exist, plus their size and position.
-  const [placed, setPlaced] = useLocalStorage<PlacedWidget<WidgetType>[]>(STORAGE_KEY, DEFAULT_PLACED)
-  const { highlightedId, createdWidgets, updateCreatedWidgetLayouts } = useWidgetContext()
+  const { highlightedId, createdWidgets, updateCreatedWidgetLayouts, placed, setPlaced } = useWidgetContext()
 
   // Ignore anything persisted that no longer matches a registered widget.
   const validPlaced = useMemo(() => {
@@ -55,7 +30,6 @@ export function DashboardGrid() {
   const layouts: ResponsiveLayouts = useMemo(
     () => ({
       lg: [
-        ...PINNED_LAYOUTS,
         ...validPlaced.map((p) => ({
           i: p.id,
           x: p.layout.x,
@@ -93,14 +67,11 @@ export function DashboardGrid() {
       ?.scrollIntoView({ behavior: "smooth", block: "center"})
   }, [highlightedId])
 
-  // Lets the scroll effect find the element, and rings it while it's the highlighted one
-  const highlightProps = (id: string) => ({
-    "data-widget-id": id,
-    className: cn(
-      "rounded-xl transition-shadow duration-300",
-      highlightedId === id && "ring-2 ring-blue-500"
-    ),
-  })
+
+  const ringClass = (id: string) => cn(
+    "h-full rounded-xl transition-shadow duration-1000",
+    highlightedId === id && "duration-300 ring-4 ring-amber-400 shadow-lg shadow-amber-400/50"
+  )
 
   return (
     <div ref={containerRef}>
@@ -123,44 +94,20 @@ export function DashboardGrid() {
           }}
         >
           {validPlaced.map((placed) => (
-            <div key={placed.id} {...highlightProps(placed.id)}>
-              <WidgetShell def={WIDGETS[placed.type]} />
+            <div key={placed.id} data-widget-id={placed.id}>
+              <div className={ringClass(placed.id)}>
+                <WidgetShell def={WIDGETS[placed.type]} />
+              </div>
             </div>
           ))}
 
           {createdWidgets.map((widget) => (
-            <div key={widget.id} {...highlightProps(widget.id)}>
-              <CreatedWidgetCard widget={widget} />
+            <div key={widget.id} data-widget-id={widget.id}>
+              <div className={ringClass(widget.id)}>
+                <CreatedWidgetCard widget={widget} />
+              </div>
             </div>
           ))}
-
-          <StatCard
-            key="energy-consumption"
-            {...highlightProps("energy-consumption")}
-            description="Energy Consumption"
-            value="1,231 KWH"
-            icon={MdEnergySavingsLeaf}
-            trendValue="-5.20%"
-            trendPositive
-          />
-          <StatCard
-            key="peak-load"
-            {...highlightProps("peak-load")}
-            description="Peak Load"
-            value="320 KWH"
-            icon={FaGaugeHigh}
-            trendValue="+2.82%"
-            trendPositive={false}
-          />
-          <StatCard
-            key="current-load"
-            {...highlightProps("current-load")}
-            description="Total Revenue"
-            value="$100,000"
-            icon={FaDollarSign}
-            trendValue="-8.12%"
-            trendPositive
-          />
         </ResponsiveGridLayout>
       )}
     </div>

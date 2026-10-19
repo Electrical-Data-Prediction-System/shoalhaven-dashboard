@@ -62,7 +62,7 @@ export function SidebarMain({
             <CollapsibleContent>
               <SidebarMenuSub>
                 {item.items?.map((subItem) => (
-                  <SidebarMenuSubItem key={subItem.title}>
+                  <SidebarMenuSubItem key={subItem.widgetId ?? subItem.title}>
                     <SidebarMenuSubButton
                       render={<Link href={subItem.url} />}
                       onDoubleClick={(e) => {
