@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import type { ApiSeries } from "@/lib/chart-data"
+import type { ApiPowerResponse } from "@/lib/chart-data"
 
 export type WidgetSize = { w: number; h: number }
 
@@ -17,8 +17,8 @@ type WidgetBase = {
 
 /** A widget that fetches its own data before rendering */
 export type DataWidget = WidgetBase & {
-  load: () => Promise<ApiSeries>
-  render: (data: ApiSeries) => ReactNode
+  load: () => Promise<ApiPowerResponse>
+  render: (data: ApiPowerResponse) => ReactNode
 }
 
 /** A widget with no data source. */

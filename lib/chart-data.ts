@@ -3,10 +3,24 @@ import { BarDatum } from "@nivo/bar";
 export type NivoSerie = { id: string, data: { x: string, y: number }[] }
 export type ApiPoint = { x: string, y: number }
 export type ApiSeries = { series: { name: string; data: ApiPoint[] }[] }
+export type ApiMeterPower = { name: string; KWH: number }
+export type ApiPowerResponse = ApiSeries | ApiMeterPower[]
 
 // Map API's 'name' back to 'id' for Nivo
-// TODO: Update shape on backend, change name to id in schema
-export const toNivoSeries = (r: ApiSeries): NivoSerie[] => r.series.map(({ name, data }) => ({ id: name, data }))
+export const toNivoSeries = (response: ApiPowerResponse): NivoSerie[] => {
+  if (Array.isArray(response)) {
+    return [{
+      id: "KWH",
+      data: response.map(({ name, KWH }) => ({ x: name, y: KWH })),
+    }]
+  }
+
+  if (response && Array.isArray(response.series)) {
+    return response.series.map(({ name, data }) => ({ id: name, data }))
+  }
+
+  throw new TypeError("Expected API response to contain a series array or meter rows")
+}
 
 // Maps a NivoSeries into a BarDatum object for bar graphs
 export const seriesToBar = (series: NivoSerie[], indexBy = "x") => {

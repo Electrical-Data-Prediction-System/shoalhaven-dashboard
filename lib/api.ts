@@ -1,4 +1,4 @@
-import type { ApiSeries } from "./chart-data";
+import type { ApiPowerResponse, ApiSeries } from "./chart-data";
 
 // In the browser, requests go through the same-origin proxy at /api/*, which
 // forwards to API_INTERNAL_URL server-side. Server-side calls hit it directly.
@@ -18,7 +18,7 @@ export function GetMeter(meterId: string) {
   return ApiFetch(`/meters/${meterId}`);
 }
 
-export function GetAggregatedMeterPower(meterId: string, start?: Date, end?: Date): Promise<ApiSeries> {
+export function GetAggregatedMeterPower(meterId: string, start?: Date, end?: Date): Promise<ApiPowerResponse> {
   const params = new URLSearchParams();
   if (start) params.set("start", start.toISOString());
   if (end) params.set("end", end.toISOString());
@@ -26,7 +26,7 @@ export function GetAggregatedMeterPower(meterId: string, start?: Date, end?: Dat
   return ApiFetch(`/meters/${meterId}/aggregate-power?${params}`)
 }
 
-export function GetAllAggregatedMeterPower(start?: Date, end?: Date): Promise<ApiSeries> {
+export function GetAllAggregatedMeterPower(start?: Date, end?: Date): Promise<ApiPowerResponse> {
   const params = new URLSearchParams();
   if (start) params.set("start", start.toISOString().split('T')[0]);
   if (end) params.set("end", end.toISOString().split('T')[0]);
