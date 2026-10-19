@@ -151,3 +151,42 @@
     @apply font-sans;
   }
 }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0; /* shortcut for top:0, left:0, right:0, bottom:0 */
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Ensure it stays on top of everything */
+}
+
+.react-grid-item .react-resizable-handle.react-resizable-handle-se {
+  right: 8px;
+  bottom: 8px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 8px;
+  background-image: none;
+  transition: background-color 150ms ease;
+}
+
+.react-grid-item .react-resizable-handle.react-resizable-handle-se::after {
+  right: 6px;
+  bottom: 6px;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--muted-foreground);
+  border-bottom: 1.5px solid var(--muted-foreground);
+  border-radius: 0 0 2px 0;
+}
+
+.react-grid-item .react-resizable-handle.react-resizable-handle-se:hover {
+  background-color: color-mix(in oklab, var(--primary) 9%, transparent);
+}
+
+.react-grid-item .react-resizable-handle.react-resizable-handle-se:hover::after {
+  border-color: var(--primary);
+}

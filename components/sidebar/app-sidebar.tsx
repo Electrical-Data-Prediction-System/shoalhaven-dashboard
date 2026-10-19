@@ -8,6 +8,7 @@ import {
   Waves,
   Zap,
   Droplet,
+  Plus,
 } from "lucide-react"
 
 import {
@@ -24,6 +25,8 @@ import {
 } from "@/components/ui/sidebar"
 
 import { SidebarMain } from "./sidebar-main"
+import { useModal } from "../forms/modal"
+import WidgetForm from "../forms/create-widget"
 
 const navMain = [
   {
@@ -109,6 +112,7 @@ const navMain = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { openModal, closeModal, isOpen } = useModal();
 
   return (
     <Sidebar>
@@ -122,22 +126,31 @@ export function AppSidebar() {
         <SidebarMain items={navMain}></SidebarMain>
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton render={<Link href="/logout" />}>
-              <LogOut />
-              <span>Sign out</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton render={<Link href="/settings" />}>
-              <Settings />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+  
+        <SidebarFooter>
+          <SidebarMenu>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton className="cursor-pointer" onClick={() => openModal(<WidgetForm />)}>
+                <Plus />
+                <span>Create Chart</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton render={<Link href="/logout" />}>
+                <LogOut />
+                <span>Sign out</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton render={<Link href="/settings" />}>
+                <Settings />
+                <span>Settings</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>

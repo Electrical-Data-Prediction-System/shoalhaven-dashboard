@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import Modal, { ModalProvider } from "@/components/forms/modal";
 import { WidgetProvider } from "@/contexts/widget-context";
 
 const roboto = Roboto({ subsets: ['latin'], variable: '--font-sans' });
@@ -30,6 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <ModalProvider>
     <html
       lang="en"
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", roboto.variable)}
@@ -42,9 +44,12 @@ export default function RootLayout({
             {/* <SidebarTrigger /> */}
             {children}
           </main>
+          <div id="modal-root" />
+          <Modal />
         </WidgetProvider>
       </SidebarProvider>
       </body>
     </html>
+        </ModalProvider>
   );
 }

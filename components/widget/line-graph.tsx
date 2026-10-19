@@ -1,51 +1,76 @@
 "use client"
 
-import { Point, ResponsiveLine } from "@nivo/line";
-import type { NivoSerie } from "@/lib/chart-data";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from "recharts"
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
+import type { ChartRow } from "@/lib/chart-data"
+import { formatChartDate, formatChartValue } from "@/lib/chart-format"
+import type { WidgetFormConfig } from "@/contexts/widget-context";
 
-export type SeriesData = NivoSerie[];
+export function LineGraph({
+  data,
+  unit,
+  color = "#217acc",
+  dataMode,
+  timePeriod,
+}: {
+  data: ChartRow[]
+  unit?: string
+  color?: string
+  dataMode: WidgetFormConfig["dataMode"]
+  timePeriod: WidgetFormConfig["timePeriod"]
+}) {
+  const chartConfig = {
+    kwh: { label: unit === "AUD" ? "Estimated cost" : "KWH", color },
+  } satisfies ChartConfig
 
-function makePointTooltip(unit?: string) {
-  return function PointTooltip({ point }: { point: Point<SeriesData[number]> }) {
-    return (
-      <div className="flex items-center gap-2 rounded-md border bg-background px-2 py-1 text-xs shadow-md">
-        <span
-          className="size-2.5 shrink-0 rounded-full"
-          style={{ background: point.seriesColor }}
-        />
-        <span className="font-medium">{point.seriesId}</span>
-        <span className="text-muted-foreground">
-          {point.data.xFormatted}: {point.data.yFormatted}{unit ? ` ${unit}` : ""}
-        </span>
-      </div>
-    );
-  }
-}
-
-export function LineGraph({ series, unit }: { series: NivoSerie[], unit?: string }) {
   return (
-    <ResponsiveLine
-      data={series}
-      margin={{ top: 10, right: 110, bottom: 30, left: 40 }}
-      colors={{ scheme: "category10" }}
-      curve="monotoneX"
-      axisBottom={{ tickSize: 0, tickPadding: 8 }}
-      axisLeft={{ tickSize: 0, tickPadding: 8 }}
-      enablePoints={false}
-      enableGridX={false}
-      useMesh
-      tooltip={makePointTooltip(unit)}
-      legends={[
-        {
-          anchor: "right",
-          direction: "column",
-          translateX: 100,
-          itemWidth: 90,
-          itemHeight: 18,
-          symbolSize: 10,
-          symbolShape: "circle",
-        },
-      ]}
-    />
+    <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
+      <LineChart data={data} accessibilityLayer margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="x"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          minTickGap={28}
+          interval="preserveStartEnd"
+          tickFormatter={(value) => formatChartDate(String(value), dataMode, timePeriod)}
+        />
+        <YAxis tickLine={false} axisLine={false} tickMargin={8} width={44} />
+        <ChartTooltip
+          cursor={false}
+          content={
+            <ChartTooltipContent
+              labelFormatter={(value) => formatChartDate(String(value), dataMode, timePeriod)}
+              formatter={(value) => unit === "AUD"
+                ? [formatChartValue(Number(value), unit), ""]
+                : [formatChartValue(Number(value), unit ?? "kWh"), unit ?? "kWh"]}
+            />
+          }
+        />
+        <ChartLegend content={<ChartLegendContent />} />
+        <Line
+          dataKey="kwh"
+          type="monotone"
+          stroke="var(--color-kwh)"
+          strokeWidth={2}
+          dot={{ r: 3, fill: "var(--color-kwh)" }}
+          activeDot={{ r: 5 }}
+        />
+      </LineChart>
+    </ChartContainer>
   )
 }

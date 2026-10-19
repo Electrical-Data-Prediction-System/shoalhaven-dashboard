@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo } from "react"
 import {
   ResponsiveGridLayout,
   useContainerWidth,
@@ -16,6 +16,7 @@ import { MdEnergySavingsLeaf } from "react-icons/md"
 import { StatCard } from "@/components/widget/stat-card"
 import type { PlacedWidget } from "@/components/widget/types"
 import { WidgetShell } from "@/components/widget/widget-shell"
+import { CreatedWidgetCard } from "@/components/widget/created-widget-card"
 import { WIDGETS, type WidgetType } from "@/components/widget/widgets"
 import { useLocalStorage } from "@/hooks/useLocalStorage"
 import { useWidgetContext } from "@/contexts/widget-context"
@@ -43,7 +44,7 @@ export function DashboardGrid() {
 
   // The placed widgets — which ones exist, plus their size and position.
   const [placed, setPlaced] = useLocalStorage<PlacedWidget<WidgetType>[]>(STORAGE_KEY, DEFAULT_PLACED)
-  const pendingLayoutChange = useRef<number | null>(null)
+  const { highlightedId, createdWidgets, updateCreatedWidgetLayouts } = useWidgetContext()
 
   // Ignore anything persisted that no longer matches a registered widget.
   const validPlaced = useMemo(() => {
@@ -62,13 +63,16 @@ export function DashboardGrid() {
           w: p.layout.w,
           h: p.layout.h,
         })),
+        ...createdWidgets.map(({ id, layout }, index) => ({
+          i: id,
+          ...(layout ?? { x: 0, y: 10 + index * 4, w: 4, h: 4 }),
+        })),
       ],
     }),
-    [validPlaced],
+    [validPlaced, createdWidgets],
   )
 
-  const handleLayoutChange = (_current: readonly LayoutItem[], all: ResponsiveLayouts) => {
-    const items = all.lg ?? []
+  const persistLayout = (items: readonly LayoutItem[]) => {
     const next = validPlaced.map((p) => {
       const item = items.find((entry) => entry.i === p.id)
       if (!item) return p
@@ -77,17 +81,9 @@ export function DashboardGrid() {
       }
       return { ...p, layout: { x: item.x, y: item.y, w: item.w, h: item.h } }
     })
-    if (next.every((p, index) => p === validPlaced[index])) return
-
-    if (pendingLayoutChange.current !== null) cancelAnimationFrame(pendingLayoutChange.current)
-    pendingLayoutChange.current = requestAnimationFrame(() => {
-      pendingLayoutChange.current = null
-      setPlaced(next)
-    })
+    if (next.some((p, index) => p !== validPlaced[index])) setPlaced(next)
+    updateCreatedWidgetLayouts(items)
   }
-
-  //CONTEXT
-  const { highlightedId } = useWidgetContext()
 
   useEffect(() => {
     if(!highlightedId) return
@@ -106,11 +102,8 @@ export function DashboardGrid() {
     ),
   })
 
-  // Blocks text selection only mid-drag, so dragging doesn't select text across widgets
-  const [isDragging, setIsDragging] = useState(false)
-
   return (
-    <div ref={containerRef} className={cn(isDragging && "select-none")}>
+    <div ref={containerRef}>
       {mounted && (
         <ResponsiveGridLayout
           width={width}
@@ -119,16 +112,25 @@ export function DashboardGrid() {
           cols={{ lg: 12, md: 8, sm: 4 }}
           rowHeight={80}
           margin={[16, 16]}
-          onLayoutChange={handleLayoutChange}
+          onDragStop={(layout) => {
+            containerRef.current?.classList.remove("select-none")
+            persistLayout(layout)
+          }}
+          onResizeStop={(layout) => persistLayout(layout)}
           onDragStart={() => {
-            setIsDragging(true)
+            containerRef.current?.classList.add("select-none")
             window.getSelection()?.removeAllRanges()
           }}
-          onDragStop={() => setIsDragging(false)}
         >
           {validPlaced.map((placed) => (
             <div key={placed.id} {...highlightProps(placed.id)}>
               <WidgetShell def={WIDGETS[placed.type]} />
+            </div>
+          ))}
+
+          {createdWidgets.map((widget) => (
+            <div key={widget.id} {...highlightProps(widget.id)}>
+              <CreatedWidgetCard widget={widget} />
             </div>
           ))}
 

@@ -1,23 +1,19 @@
-import { BarDatum } from "@nivo/bar";
-
-export type NivoSerie = { id: string, data: { x: string, y: number }[] }
 export type ApiPoint = { x: string, y: number }
 export type ApiSeries = { series: { name: string; data: ApiPoint[] }[] }
+export type ApiMeterPower = { name: string; KWH: number }
+export type ApiPowerResponse = ApiSeries | ApiMeterPower[]
+export type ChartRow = { x: string; kwh: number }
 
-// Map API's 'name' back to 'id' for Nivo
-// TODO: Update shape on backend, change name to id in schema
-export const toNivoSeries = (r: ApiSeries): NivoSerie[] => r.series.map(({ name, data }) => ({ id: name, data }))
-
-// Maps a NivoSeries into a BarDatum object for bar graphs
-export const seriesToBar = (series: NivoSerie[], indexBy = "x") => {
-  const keys = series.map((s) => s.id)
-  const rows = new Map<string, BarDatum>()
-  for (const s of series) {
-    for (const { x, y } of s.data) {
-      const row = rows.get(x) ?? { [indexBy]: x }
-      row[s.id] = y
-      rows.set(x, row)
-    }
+export const toChartRows = (response: ApiPowerResponse): ChartRow[] => {
+  if (Array.isArray(response)) {
+    return response.map(({ name, KWH }) => ({ x: name, kwh: KWH }))
   }
-  return { data: [...rows.values()], keys, indexBy }
+
+  if (response && Array.isArray(response.series)) {
+    return response.series.flatMap(({ data }) =>
+      data.map(({ x, y }) => ({ x: String(x), kwh: y })),
+    )
+  }
+
+  throw new TypeError("Expected API response to contain a series array or meter rows")
 }

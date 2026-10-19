@@ -1,4 +1,24 @@
-import type { ApiSeries } from "./chart-data";
+import type { ApiPowerResponse, ApiSeries } from "./chart-data";
+
+export type MeterSearchResult = {
+  _id: string;
+  location: {
+    fullAddress: string;
+    street: string;
+    postcode: string;
+    place: string;
+    region: string;
+    country: string;
+  };
+  type: string;
+  unit: string;
+};
+
+export type ApiReading = {
+  meterId: string;
+  kwh: number;
+  timestamp: string;
+};
 
 // In the browser, requests go through the same-origin proxy at /api/*, which
 // forwards to API_INTERNAL_URL server-side. Server-side calls hit it directly.
@@ -14,19 +34,30 @@ export async function ApiFetch(path: string, init?: RequestInit) {
   return res.json();
 }
 
-export function GetMeter(meterId: string) {
+export function GetMeter(meterId: string): Promise<{ meterObject: MeterSearchResult }> {
   return ApiFetch(`/meters/${meterId}`);
 }
 
-export function GetAggregatedMeterPower(meterId: string, start?: Date, end?: Date): Promise<ApiSeries> {
+export function SearchMetersByLocation(location: string): Promise<MeterSearchResult[]> {
+  const params = new URLSearchParams({ location });
+  return ApiFetch(`/meters?${params}`);
+}
+
+export function GetAggregatedMeterPower(
+  meterId: string,
+  start?: Date,
+  end?: Date,
+  interval?: "5m" | "week" | "month" | "year",
+): Promise<ApiPowerResponse> {
   const params = new URLSearchParams();
   if (start) params.set("start", start.toISOString());
   if (end) params.set("end", end.toISOString());
+  if (interval) params.set("interval", interval);
 
   return ApiFetch(`/meters/${meterId}/aggregate-power?${params}`)
 }
 
-export function GetAllAggregatedMeterPower(start?: Date, end?: Date): Promise<ApiSeries> {
+export function GetAllAggregatedMeterPower(start?: Date, end?: Date): Promise<ApiPowerResponse> {
   const params = new URLSearchParams();
   if (start) params.set("start", start.toISOString().split('T')[0]);
   if (end) params.set("end", end.toISOString().split('T')[0]);
@@ -35,14 +66,16 @@ export function GetAllAggregatedMeterPower(start?: Date, end?: Date): Promise<Ap
 }
 
 // Dates are formated in ISO: 2026-08-03 05:34:37.967019
-export function GetReadingsBetween(meterId: string, start?: Date, end?: Date): Promise<ApiSeries> {
+export function GetReadingsBetween(meterId: string, start: Date, end?: Date): Promise<ApiReading[]> {
   const params = new URLSearchParams();
-  if (start) params.set("start", start.toISOString().split('T')[0]);
-  if (end) params.set("end", end.toISOString().split('T')[0]);
-
-
+  params.set("start", start.toISOString());
+  if (end) params.set("end", end.toISOString());
 
   return ApiFetch(`/meters/${meterId}/readings?${params}`)
+}
+
+export function GetLatestReadingTimestamp(meterId: string): Promise<string | null> {
+  return ApiFetch(`/meters/${meterId}/readings/latest`).then((response) => response.timestamp)
 }
 
 

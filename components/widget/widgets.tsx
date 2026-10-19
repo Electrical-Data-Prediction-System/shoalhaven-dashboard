@@ -1,5 +1,5 @@
 import { GetAllAggregatedMeterPower } from "@/lib/api"
-import type { ApiSeries } from "@/lib/chart-data"
+import type { ApiPowerResponse } from "@/lib/chart-data"
 import { PowerUsageWidget } from "./power-usage-widget"
 import { StationTable } from "./station-table"
 import type { WidgetDefinition } from "./types"
@@ -11,7 +11,7 @@ export const WIDGETS = {
     title: "Power Usage Overview",
     defaultSize: { w: 6, h: 4 },
     load: () => GetAllAggregatedMeterPower(),
-    render: (data: ApiSeries) => <PowerUsageWidget data={data} unit="kWh" />,
+    render: (data: ApiPowerResponse) => <PowerUsageWidget data={data} unit="kWh" />,
   },
   // "cost-overview": {
   //   title: "Cost Overview",
