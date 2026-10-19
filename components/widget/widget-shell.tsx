@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useApiData } from "@/hooks/use-ApiData"
 import { cn } from "@/lib/utils"
@@ -12,7 +13,7 @@ import { isDataWidget, type DataWidget, type WidgetDefinition } from "./types"
  * handled centrally; static widgets render straight through. Widget content
  * components should NOT render their own card or title
  */
-export function WidgetShell({ def }: { def: WidgetDefinition }) {
+export const WidgetShell = memo(function WidgetShell({ def }: { def: WidgetDefinition }) {
   return (
     <div
       className={cn(
@@ -26,7 +27,7 @@ export function WidgetShell({ def }: { def: WidgetDefinition }) {
       </div>
     </div>
   )
-}
+})
 
 function WidgetContent({ def }: { def: WidgetDefinition }) {
   if (!isDataWidget(def)) return <>{def.render()}</>

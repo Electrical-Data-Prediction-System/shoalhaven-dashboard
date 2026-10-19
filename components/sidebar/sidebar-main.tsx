@@ -18,7 +18,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import type { WidgetType } from "@/components/widget/widgets"
+import { WIDGETS, type WidgetType } from "@/components/widget/widgets"
 import { useWidgetContext } from "@/contexts/widget-context"
 
 export function SidebarMain({
@@ -73,7 +73,15 @@ export function SidebarMain({
                       className={subItem.widgetType ? "cursor-grab active:cursor-grabbing" : undefined}
                       onDragStart={
                         subItem.widgetType
-                          ? (e) => e.dataTransfer.setData("application/x-widget-type", subItem.widgetType!)
+                          ? (e) => {
+                              const type = subItem.widgetType!
+                              const { defaultSize } = WIDGETS[type]
+                              e.dataTransfer.setData("application/x-widget-type", type)
+                              e.dataTransfer.setData(
+                                `application/x-widget-size-${defaultSize.w}-${defaultSize.h}`,
+                                "",
+                              )
+                            }
                           : undefined
                       }
                       onDoubleClick={(e) => {

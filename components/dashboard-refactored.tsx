@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo } from "react"
 import {
   ResponsiveGridLayout,
   useContainerWidth,
@@ -44,8 +44,6 @@ export function DashboardGrid() {
 
   // The placed widgets — which ones exist, plus their size and position.
   const [placed, setPlaced] = useLocalStorage<PlacedWidget<WidgetType>[]>(STORAGE_KEY, DEFAULT_PLACED)
-  const [gridInstanceKey, setGridInstanceKey] = useState(0)
-  const pendingLayoutChange = useRef<number | null>(null)
 
   // Ignore anything persisted that no longer matches a registered widget.
   const validPlaced = useMemo(() => {
@@ -69,8 +67,7 @@ export function DashboardGrid() {
     [validPlaced],
   )
 
-  const handleLayoutChange = (_current: readonly LayoutItem[], all: ResponsiveLayouts) => {
-    const items = all.lg ?? []
+  const persistLayout = (items: readonly LayoutItem[]) => {
     const next = validPlaced.map((p) => {
       const item = items.find((entry) => entry.i === p.id)
       if (!item) return p
@@ -80,15 +77,10 @@ export function DashboardGrid() {
       return { ...p, layout: { x: item.x, y: item.y, w: item.w, h: item.h } }
     })
     if (next.every((p, index) => p === validPlaced[index])) return
-
-    if (pendingLayoutChange.current !== null) cancelAnimationFrame(pendingLayoutChange.current)
-    pendingLayoutChange.current = requestAnimationFrame(() => {
-      pendingLayoutChange.current = null
-      setPlaced(next)
-    })
+    setPlaced(next)
   }
 
-  const handleDrop = (_layout: Layout, item: LayoutItem | undefined, e: Event) => {
+  const handleDrop = (layout: Layout, item: LayoutItem | undefined, e: Event) => {
     if (!item) return
     const dataTransfer = (e as DragEvent).dataTransfer
     const raw = dataTransfer?.getData("application/x-widget-type")
@@ -96,18 +88,23 @@ export function DashboardGrid() {
 
     const type = raw as WidgetType
     const { defaultSize } = WIDGETS[type]
+    const updatedPlaced = validPlaced.map((placedWidget) => {
+      const finalItem = layout.find((layoutItem) => layoutItem.i === placedWidget.id)
+      if (!finalItem) return placedWidget
+      return {
+        ...placedWidget,
+        layout: { x: finalItem.x, y: finalItem.y, w: finalItem.w, h: finalItem.h },
+      }
+    })
 
     setPlaced([
-      ...validPlaced,
+      ...updatedPlaced,
       {
         id: crypto.randomUUID(),
         type,
         layout: { x: item.x, y: item.y, w: defaultSize.w, h: defaultSize.h },
       },
     ])
-    // Force a remount so a freshly dropped widget doesn't reconcile against a
-    // stale layout snapshot (library timing race with newly added children).
-    setGridInstanceKey((key) => key + 1)
   }
 
   //CONTEXT
@@ -130,28 +127,40 @@ export function DashboardGrid() {
     ),
   })
 
-  // Blocks text selection only mid-drag, so dragging doesn't select text across widgets
-  const [isDragging, setIsDragging] = useState(false)
-
   return (
-    <div ref={containerRef} className={cn(isDragging && "select-none")}>
+    <div ref={containerRef}>
       {mounted && (
         <ResponsiveGridLayout
-          key={gridInstanceKey}
           width={width}
           layouts={layouts}
           breakpoints={{ lg: 1024, md: 768, sm: 480 }}
           cols={{ lg: 12, md: 8, sm: 4 }}
           rowHeight={80}
           margin={[16, 16]}
-          onLayoutChange={handleLayoutChange}
-          dropConfig={{ enabled: true, defaultItem: { w: 2, h: 2 } }}
+          dropConfig={{
+            enabled: true,
+            defaultItem: { w: 2, h: 2 },
+            onDragOver: (event) => {
+              const types = event.dataTransfer?.types
+              if (!types) return
+              const sizeType = Array.from(types).find((type) =>
+                type.startsWith("application/x-widget-size-"),
+              )
+              const size = sizeType?.match(/application\/x-widget-size-(\d+)-(\d+)/)
+              if (!size) return
+              return { w: Number(size[1]), h: Number(size[2]) }
+            },
+          }}
           onDrop={handleDrop}
+          onDragStop={(layout) => {
+            containerRef.current?.classList.remove("select-none")
+            persistLayout(layout)
+          }}
+          onResizeStop={(layout) => persistLayout(layout)}
           onDragStart={() => {
-            setIsDragging(true)
+            containerRef.current?.classList.add("select-none")
             window.getSelection()?.removeAllRanges()
           }}
-          onDragStop={() => setIsDragging(false)}
         >
           {validPlaced.map((placed) => (
             <div key={placed.id} {...highlightProps(placed.id)}>
