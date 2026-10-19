@@ -33,13 +33,13 @@ export function StatCard({
   return (
     <Card className={cn("@container/card", className)} {...props}>
       <CardHeader className="flex-row items-center justify-between">
-        
+
         <CardDescription>{description}</CardDescription>
         <div className="flex w-full items-center justify-between gap-10">
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
             {value}
           </CardTitle>
-        
+
           <div className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-lg bg-brand-secondary-700 text-white">
             <Icon className="size-5" />
           </div>

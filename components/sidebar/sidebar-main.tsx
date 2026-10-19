@@ -18,7 +18,8 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import type { WidgetType } from "@/lib/widget-registry"
+import type { WidgetType } from "@/components/widget/widgets"
+import { useWidgetContext } from "@/contexts/widget-context"
 
 export function SidebarMain({
   items,
@@ -31,10 +32,16 @@ export function SidebarMain({
     items?: {
       title: string
       url: string
+      // Kind of widget to create when this item is dragged onto the grid
       widgetType?: WidgetType
+      // Placed widget to highlight when this item is double-clicked
+      widgetId?: string
     }[]
   }[]
 }) {
+  const { highlight } = useWidgetContext()
+
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -69,6 +76,11 @@ export function SidebarMain({
                           ? (e) => e.dataTransfer.setData("application/x-widget-type", subItem.widgetType!)
                           : undefined
                       }
+                      onDoubleClick={(e) => {
+                        if(!subItem.widgetId) return
+                        e.preventDefault()
+                        highlight(subItem.widgetId)
+                      }}
                     >
                       <span>{subItem.title}</span>
                     </SidebarMenuSubButton>
