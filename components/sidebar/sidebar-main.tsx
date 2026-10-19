@@ -18,7 +18,6 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { WIDGETS, type WidgetType } from "@/components/widget/widgets"
 import { useWidgetContext } from "@/contexts/widget-context"
 
 export function SidebarMain({
@@ -32,8 +31,6 @@ export function SidebarMain({
     items?: {
       title: string
       url: string
-      // Kind of widget to create when this item is dragged onto the grid
-      widgetType?: WidgetType
       // Placed widget to highlight when this item is double-clicked
       widgetId?: string
     }[]
@@ -65,25 +62,9 @@ export function SidebarMain({
             <CollapsibleContent>
               <SidebarMenuSub>
                 {item.items?.map((subItem) => (
-                  <SidebarMenuSubItem key={subItem.title}>
+                  <SidebarMenuSubItem key={subItem.widgetId ?? subItem.title}>
                     <SidebarMenuSubButton
                       render={<Link href={subItem.url} />}
-                      draggable={!!subItem.widgetType}
-                      unselectable={subItem.widgetType ? "on" : undefined}
-                      className={subItem.widgetType ? "cursor-grab active:cursor-grabbing" : undefined}
-                      onDragStart={
-                        subItem.widgetType
-                          ? (e) => {
-                              const type = subItem.widgetType!
-                              const { defaultSize } = WIDGETS[type]
-                              e.dataTransfer.setData("application/x-widget-type", type)
-                              e.dataTransfer.setData(
-                                `application/x-widget-size-${defaultSize.w}-${defaultSize.h}`,
-                                "",
-                              )
-                            }
-                          : undefined
-                      }
                       onDoubleClick={(e) => {
                         if(!subItem.widgetId) return
                         e.preventDefault()

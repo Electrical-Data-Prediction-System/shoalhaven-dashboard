@@ -2,6 +2,20 @@
 
 import { createContext, ReactNode, useContext, useRef, useState } from "react"
 import { useLocalStorage } from "@/hooks/useLocalStorage"
+import type { PlacedWidget } from "@/components/widget/types"
+import type { WidgetType } from "@/components/widget/widgets"
+
+export const DEFAULT_PLACED: PlacedWidget<WidgetType>[] = [
+    { id: "energy-consumption", type: "energy-consumption", layout: { x: 0, y: 0, w: 3, h: 2 } },
+    { id: "peak-load", type: "peak-load", layout: { x: 3, y: 0, w: 3, h: 2 } },
+    { id: "current-load", type: "current-load", layout: { x: 6, y: 0, w: 3, h: 2 } },
+    { id: "meter-power-usage", type: "meter-power-usage", layout: { x: 0, y: 2, w: 6, h: 4 } },
+    // { id: "cost-overview", type: "cost-overview", layout: { x: 6, y: 2, w: 2, h: 4 } },
+    { id: "station-power-usage", type: "station-power-usage", layout: { x: 0, y: 6, w: 4, h: 4 } },
+    // { id: "energy-cost", type: "energy-cost", layout: { x: 2, y: 2, w: 4, h: 4 } } Already a stat card lol
+  ]
+
+const STORAGE_KEY = "dashboard.widgets"
 
 export type WidgetFormConfig = {
     name: string
@@ -31,6 +45,10 @@ type WidgetContextValue = {
     updateCreatedWidgetColor: (id: string, color: string) => void
     deleteCreatedWidget: (id: string) => void
     updateCreatedWidgetLayouts: (items: readonly GridPosition[]) => void
+
+    placed: PlacedWidget<WidgetType>[]
+    setPlaced: (value: PlacedWidget<WidgetType>[]) => void
+
 }
 
 const WidgetContext = createContext<WidgetContextValue | null>(null)
@@ -38,6 +56,10 @@ const CREATED_WIDGETS_KEY = "dashboard.createdWidgets"
 
 export function WidgetProvider({ children }: { children : ReactNode})
 {
+    const [placed, setPlaced] = useLocalStorage<PlacedWidget<WidgetType>[]>(STORAGE_KEY, DEFAULT_PLACED)
+
+
+
     const [highlightedId, setHighlightedId] = useState<string | null>(null)
     const [createdWidgets, setCreatedWidgets] = useLocalStorage<CreatedWidget[]>(CREATED_WIDGETS_KEY, [])
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -106,6 +128,9 @@ export function WidgetProvider({ children }: { children : ReactNode})
             updateCreatedWidgetColor,
             deleteCreatedWidget,
             updateCreatedWidgetLayouts,
+
+            placed,
+            setPlaced,
         }}>
             {children}
         </WidgetContext.Provider>
