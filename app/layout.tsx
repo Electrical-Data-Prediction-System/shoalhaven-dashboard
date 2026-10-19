@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import Modal, { ModalProvider } from "@/components/forms/modal";
 
 const roboto = Roboto({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -29,19 +30,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <ModalProvider>
     <html
       lang="en"
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", roboto.variable)}
     >
       <body>
-      <SidebarProvider>
-        <AppSidebar />
-        <main className="min-w-0 flex-1">
-          {/* <SidebarTrigger /> */}
-          {children}
-        </main>
-      </SidebarProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            <main className="min-w-0 flex-1">
+              {/* <SidebarTrigger /> */}
+              {children}
+            </main>
+          </SidebarProvider>
+
       </body>
     </html>
+          <div id="modal-root"/>
+          <Modal />
+        </ModalProvider>
   );
 }
