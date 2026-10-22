@@ -25,55 +25,13 @@ import {
 } from "@/components/ui/sidebar"
 
 import { SidebarMain } from "./sidebar-main"
-import type { WidgetType } from "@/components/widget/widgets"
 import { useModal } from "../forms/modal"
 import WidgetForm from "../forms/create-widget"
 
-const navMain = [
-  {
-    title: "Power",
-    url: "/power",
-    icon: Zap,
-    isActive: true,
-    items: [
-      {
-        title: "Energy Cost",
-        url: "#",
-        widgetType: "energy-cost" as const satisfies WidgetType,
-      },
-      {
-        title: "Energy Consumption",
-        url: "#",
-        widgetId: "energy-consumption"
-      },
-      {
-        title: "Peak Load",
-        url: "#",
-        widgetId: "peak-load"
-      },
-      {
-        title: "Total Revenue",
-        url: "#",
-        widgetId: "current-load"
-      },
-      {
-        title: "Power Usage Overview",
-        url: "#",
-        widgetType: "meter-power-usage" as const satisfies WidgetType,
-        widgetId: "meter-power-usage"
-      },
-      {
-        title: "Cost Overview",
-        url: "#",
-      },
-      {
-        title: "Station Usage",
-        url: "#",
-        widgetType: "station-power-usage" as const satisfies WidgetType,
-        widgetId: "station-power-usage"
-      },
-    ],
-  },
+import { WIDGETS } from "@/components/widget/widgets"
+import { useWidgetContext } from "@/contexts/widget-context"
+
+const otherSections = [
   {
     title: "Water",
     url: "/water",
@@ -117,6 +75,21 @@ const navMain = [
 export function AppSidebar() {
   const pathname = usePathname()
   const { openModal, closeModal, isOpen } = useModal();
+
+
+  const { placed, createdWidgets } = useWidgetContext();
+
+  const powerItems = [
+    ...placed
+      .filter((p) => p.type in WIDGETS)
+      .map((p) => ({ title: WIDGETS[p.type].title, url: "#", widgetId: p.id})),
+    ...createdWidgets.map((w) => ({ title: w.name, url: "#", widgetId: w.id}))
+  ]
+
+  const navMain = [
+    { title: "Power", url: "#", icon: Zap, isActive: true, items: powerItems},
+    ...otherSections
+  ]
 
   return (
     <Sidebar>
