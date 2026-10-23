@@ -141,6 +141,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
                 <SelectItem value="area">Area</SelectItem>
                 <SelectItem value="bar">Bar</SelectItem>
                 <SelectItem value="pie">Pie</SelectItem>
+                <SelectItem value="datatable">Data table</SelectItem>
               </SelectContent>
             </Select>
           </div>

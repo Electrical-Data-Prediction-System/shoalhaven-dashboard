@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useWidgetContext, type CreatedWidget } from "@/contexts/widget-context"
 import { useModal } from "@/components/forms/modal"
 import type { ChartRow } from "@/lib/chart-data"
-import { formatChartDate } from "@/lib/chart-format"
+import { formatTableDate } from "@/lib/chart-format"
 import { WidgetVisualization } from "./widget-visualization"
 
 const currencyFormatter = new Intl.NumberFormat(undefined, {
@@ -23,7 +23,7 @@ const currencyFormatter = new Intl.NumberFormat(undefined, {
   currency: "AUD",
 })
 
-type RatePeriod = { key: string; label: string; kwh: number }
+type RatePeriod = { key: string; label: string; x: string; kwh: number }
 const EMPTY_CHART_DATA: ChartRow[] = []
 
 function getSydneyDateKey(value: string) {
@@ -51,18 +51,17 @@ function getRatePeriods(widget: CreatedWidget, data: ChartRow[]): RatePeriod[] {
     grouped.set(key, (grouped.get(key) ?? 0) + row.kwh)
   }
 
-  return [...grouped].sort(([left], [right]) => left.localeCompare(right)).map(([key, kwh]) => ({
-    key,
-    kwh,
-    label: groupByDay
+  return [...grouped].sort(([left], [right]) => left.localeCompare(right)).map(([key, kwh]) => {
+    const label = groupByDay
       ? new Intl.DateTimeFormat(undefined, {
           month: "short",
           day: "numeric",
           year: "numeric",
           timeZone: "UTC",
         }).format(new Date(`${key}T00:00:00Z`))
-      : formatChartDate(key, widget.dataMode, widget.timePeriod),
-  }))
+      : formatTableDate(key, widget.dataMode, widget.timePeriod)
+    return { key, kwh, label, x: groupByDay ? label : key }
+  })
 }
 
 export function WidgetFullscreen({
@@ -92,10 +91,10 @@ export function WidgetFullscreen({
   const selectedRate = selectedPeriodKey ? draftRates[selectedPeriodKey] : undefined
   const costData = ratePeriods.flatMap((period) => {
     const rate = draftRates[period.key]
-    return rate === undefined ? [] : [{ x: period.label, kwh: period.kwh * rate }]
+    return rate === undefined ? [] : [{ x: period.x, kwh: (period.kwh * rate) / 100 }]
   })
   const totalCost = ratePeriods.reduce(
-    (sum, period) => sum + period.kwh * (draftRates[period.key] ?? 0),
+    (sum, period) => sum + (period.kwh * (draftRates[period.key] ?? 0)) / 100,
     0,
   )
   const missingRateCount = ratePeriods.filter(({ key }) => draftRates[key] === undefined).length
@@ -215,20 +214,24 @@ export function WidgetFullscreen({
               id="base-rate"
               type="number"
               min="0"
-              step="0.001"
+              step="0.01"
               inputMode="decimal"
-              placeholder="e.g. 0.32"
+              placeholder="e.g. 32"
               value={baseRate}
               onChange={(event) => setBaseRate(event.target.value)}
             />
             <Button type="button" variant="outline" onClick={applyRateToAll}>Apply</Button>
           </div>
-          <p className="text-xs text-muted-foreground">AUD per kWh</p>
+          <p className="text-xs text-muted-foreground">Cents per kWh</p>
         </div>
 
         <div className="grid gap-2">
           <label htmlFor="rate-period" className="text-sm font-medium">Adjust one period</label>
-          <Select value={selectedPeriodKey} onValueChange={(value) => setSelectedPeriod(value ?? "")}>
+          <Select
+            items={ratePeriods.map(({ key, label }) => ({ value: key, label }))}
+            value={selectedPeriodKey}
+            onValueChange={(value) => setSelectedPeriod(value ?? "")}
+          >
             <SelectTrigger id="rate-period" className="w-full">
               <SelectValue placeholder="Select a period" />
             </SelectTrigger>
@@ -242,10 +245,10 @@ export function WidgetFullscreen({
             id="period-rate"
             type="number"
             min="0"
-            step="0.001"
+            step="0.01"
             inputMode="decimal"
-            aria-label="AUD per kWh for selected period"
-            placeholder="AUD per kWh"
+            aria-label="Cents per kWh for selected period"
+            placeholder="Cents per kWh"
             value={selectedRate ?? ""}
             onChange={(event) => updateSelectedRate(event.target.value)}
             disabled={!selectedPeriodKey}
