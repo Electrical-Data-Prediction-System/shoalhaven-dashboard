@@ -22,7 +22,10 @@ export type ApiReading = {
 
 // In the browser, requests go through the same-origin proxy at /api/*, which
 // forwards to API_INTERNAL_URL server-side. Server-side calls hit it directly.
-const API_BASE = typeof window === "undefined" ? process.env.API_INTERNAL_URL : "/api";
+const API_BASE = 
+  typeof window === "undefined" 
+    ? process.env.API_INTERNAL_URL 
+    : process.env.NEXT_PUBLIC_API_URL;
 
 export async function ApiFetch(path: string, init?: RequestInit) {
   if (!API_BASE) {
