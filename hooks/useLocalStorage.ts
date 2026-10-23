@@ -1,60 +1,80 @@
 import { useMemo, useRef, useSyncExternalStore } from "react";
 
+const DATABASE_ID =
+    process.env.NEXT_PUBLIC_DATABASE_ID ?? "demo";
+
 const subscribe = (callback: () => void) => {
+    if (typeof window === "undefined") return () => {};
+
     window.addEventListener("storage", callback);
     window.addEventListener("local-storage-update", callback);
+
     return () => {
         window.removeEventListener("storage", callback);
         window.removeEventListener("local-storage-update", callback);
-    }
-}
+    };
+};
 
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
-  const lastStringRef = useRef<string>("");
-  const initialString = JSON.stringify(initialValue);
+export function useLocalStorage<T>(
+    key: string,
+    initialValue: T
+): [T, (value: T) => void] {
+    // Automatically namespace keys by database
+    const storageKey = `${DATABASE_ID}-${key}`;
 
-  const getSnapshot = () => {
-    if (typeof window === "undefined") return initialString;
+    const lastStringRef = useRef<string | null>(null);
+    const initialString = JSON.stringify(initialValue);
 
-    try {
-        const item = localStorage.getItem(key);
+    const getSnapshot = () => {
+        if (typeof window === "undefined") return initialString;
 
-        if (item === "[object Object]") {
-            localStorage.setItem(key, initialString);
+        try {
+            const item = window.localStorage.getItem(storageKey);
+            const nextString = item ?? initialString;
+
+            if (lastStringRef.current !== nextString) {
+                lastStringRef.current = nextString;
+            }
+
+            return lastStringRef.current;
+        } catch {
             return initialString;
         }
+    };
 
-        const nextString = item ? item : initialString;
+    const getServerSnapshot = () => initialString;
 
-        if (nextString !== lastStringRef.current) {
-            lastStringRef.current = nextString;
-        }
+    const storeString = useSyncExternalStore(
+        subscribe,
+        getSnapshot,
+        getServerSnapshot
+    );
 
-        return lastStringRef.current;
-    } catch (error) {
-        return initialString;
-    }
-  };
-
-    const getServerSnapshot = () => JSON.stringify(initialValue);
-    const storeString = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
     const value = useMemo(() => {
         try {
             return JSON.parse(storeString) as T;
-        } catch (error) {
-            console.warn(`Resetting corrupted storage payload for key: ${key}`);
+        } catch {
+            console.warn(`Invalid storage data for key: ${storageKey}`);
             return initialValue;
         }
-    }, [storeString]);
+    }, [storeString, initialValue, storageKey]);
 
-  const setValue = (newValue: T) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(newValue));
-      window.dispatchEvent(new Event("local-storage-update"));
-    } catch (error) {
-      console.error(`Could not save updates for key: ${key}`, error);
-    }
-  };
+    const setValue = (newValue: T) => {
+        if (typeof window === "undefined") return;
+
+        try {
+            window.localStorage.setItem(
+                storageKey,
+                JSON.stringify(newValue)
+            );
+            window.dispatchEvent(new Event("local-storage-update"));
+        } catch (error) {
+            console.error(
+                `Could not save updates for key: ${storageKey}`,
+                error
+            );
+        }
+    };
 
     return [value, setValue];
 }

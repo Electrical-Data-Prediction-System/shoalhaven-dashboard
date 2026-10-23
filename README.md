@@ -12,6 +12,8 @@ yarn dev
 pnpm dev
 # or
 bun dev
+# or if on older machine
+npx next dev --webpack
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
