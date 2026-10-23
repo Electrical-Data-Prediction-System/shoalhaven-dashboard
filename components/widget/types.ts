@@ -40,5 +40,7 @@ export type WidgetLayout = { x: number; y: number; w: number; h: number }
 export type PlacedWidget<TType extends string = string> = {
   id: string
   type: TType
+  /** Optional dashboard-specific title override for built-in widgets */
+  title?: string
   layout: WidgetLayout
 }

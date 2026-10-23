@@ -82,7 +82,7 @@ export function AppSidebar() {
   const powerItems = [
     ...placed
       .filter((p) => p.type in WIDGETS)
-      .map((p) => ({ title: WIDGETS[p.type].title, url: "#", widgetId: p.id})),
+      .map((p) => ({ title: p.title ?? WIDGETS[p.type].title, url: "#", widgetId: p.id})),
     ...createdWidgets.map((w) => ({ title: w.name, url: "#", widgetId: w.id}))
   ]
 

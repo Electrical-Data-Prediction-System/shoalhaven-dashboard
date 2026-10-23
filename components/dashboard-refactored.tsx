@@ -96,7 +96,7 @@ export function DashboardGrid() {
           {validPlaced.map((placed) => (
             <div key={placed.id} data-widget-id={placed.id}>
               <div className={ringClass(placed.id)}>
-                <WidgetShell def={WIDGETS[placed.type]} />
+                <WidgetShell def={WIDGETS[placed.type]} widget={placed} />
               </div>
             </div>
           ))}
