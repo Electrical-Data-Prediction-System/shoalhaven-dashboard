@@ -11,7 +11,7 @@ export const DEFAULT_PLACED: PlacedWidget<WidgetType>[] = [
     { id: "current-load", type: "current-load", layout: { x: 6, y: 0, w: 3, h: 2 } },
     { id: "meter-power-usage", type: "meter-power-usage", layout: { x: 0, y: 2, w: 6, h: 4 } },
     // { id: "cost-overview", type: "cost-overview", layout: { x: 6, y: 2, w: 2, h: 4 } },
-    { id: "station-power-usage", type: "station-power-usage", layout: { x: 0, y: 6, w: 4, h: 4 } },
+    // { id: "station-power-usage", type: "station-power-usage", layout: { x: 0, y: 6, w: 4, h: 4 } },
     // { id: "energy-cost", type: "energy-cost", layout: { x: 2, y: 2, w: 4, h: 4 } } Already a stat card lol
   ]
 
