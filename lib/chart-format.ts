@@ -7,18 +7,48 @@ export function formatChartValue(value: number, unit: string) {
   return value.toLocaleString()
 }
 
+function parseChartDate(value: string, dataMode: WidgetFormConfig["dataMode"]) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?/)
+  if (!match) return null
+
+  const [, year, month, day, hour = "0", minute = "0", second = "0"] = match
+  return dataMode === "aggregate"
+    ? new Date(/(?:Z|[+-]\d{2}:?\d{2})$/.test(value) ? value : `${value}Z`)
+    : new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second)))
+}
+
+export function formatTableDate(
+  value: string,
+  dataMode: WidgetFormConfig["dataMode"],
+  timePeriod: WidgetFormConfig["timePeriod"],
+) {
+  const date = parseChartDate(value, dataMode)
+  if (!date) return value
+
+  const aggregateOptions: Record<WidgetFormConfig["timePeriod"], Intl.DateTimeFormatOptions> = {
+    "5m": { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" },
+    day: { day: "numeric", month: "short", year: "numeric" },
+    week: { day: "numeric", month: "short", year: "numeric" },
+    month: { month: "short", year: "numeric" },
+    year: { year: "numeric" },
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    ...(dataMode === "aggregate"
+      ? aggregateOptions[timePeriod]
+      : { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }),
+    timeZone: dataMode === "aggregate" ? "Australia/Sydney" : "UTC",
+  }).format(date)
+}
+
 export function formatChartDate(
   value: string,
   dataMode: WidgetFormConfig["dataMode"],
   timePeriod: WidgetFormConfig["timePeriod"],
 ) {
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?/)
-  if (!match) return value
+  const date = parseChartDate(value, dataMode)
+  if (!date) return value
 
-  const [, year, month, day, hour = "0", minute = "0", second = "0"] = match
-  const date = dataMode === "aggregate"
-    ? new Date(/(?:Z|[+-]\d{2}:?\d{2})$/.test(value) ? value : `${value}Z`)
-    : new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second)))
   const aggregateOptions: Record<WidgetFormConfig["timePeriod"], Intl.DateTimeFormatOptions> = {
     "5m": { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" },
     day: { month: "short", day: "numeric" },
