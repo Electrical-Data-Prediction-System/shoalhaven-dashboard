@@ -9,6 +9,7 @@ const config: WidgetFormConfig = {
   timePeriod: "month",
   meterId: "meter-1",
 }
+const CREATED_WIDGETS_STORAGE_KEY = "demo-dashboard.createdWidgets"
 
 function ContextHarness() {
   const { createdWidgets, onCreateWidget, updateCreatedWidget, deleteCreatedWidget } = useWidgetContext()
@@ -50,16 +51,16 @@ describe("WidgetProvider", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Create widget" }))
     expect(screen.getByText("Energy use")).toBeTruthy()
-    expect(JSON.parse(localStorage.getItem("dashboard.createdWidgets") ?? "[]")).toMatchObject([
+    expect(JSON.parse(localStorage.getItem(CREATED_WIDGETS_STORAGE_KEY) ?? "[]")).toMatchObject([
       { id: "widget-1", name: "Energy use", meterId: "meter-1" },
     ])
 
     fireEvent.click(screen.getByRole("button", { name: "Update widget" }))
     expect(screen.getByText("Updated energy use")).toBeTruthy()
-    expect(JSON.parse(localStorage.getItem("dashboard.createdWidgets") ?? "[]")[0].name).toBe("Updated energy use")
+    expect(JSON.parse(localStorage.getItem(CREATED_WIDGETS_STORAGE_KEY) ?? "[]")[0].name).toBe("Updated energy use")
 
     fireEvent.click(screen.getByRole("button", { name: "Delete widget" }))
     expect(screen.queryByText("Updated energy use")).toBeNull()
-    expect(JSON.parse(localStorage.getItem("dashboard.createdWidgets") ?? "[]")).toEqual([])
+    expect(JSON.parse(localStorage.getItem(CREATED_WIDGETS_STORAGE_KEY) ?? "[]")).toEqual([])
   })
 })

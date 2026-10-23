@@ -20,15 +20,13 @@ export type ApiReading = {
   timestamp: string;
 };
 
-// In the browser, requests go through the same-origin proxy at /api/*, which
-// forwards to API_INTERNAL_URL server-side. Server-side calls hit it directly.
-const API_BASE = 
-  typeof window === "undefined" 
-    ? process.env.API_INTERNAL_URL 
-    : process.env.NEXT_PUBLIC_API_URL;
+// Browser requests use the same-origin proxy at /api/*; server-side calls hit
+// the API directly using the private API_INTERNAL_URL environment variable.
+const IS_BROWSER = typeof window !== "undefined";
+const API_BASE = IS_BROWSER ? "/api" : process.env.API_INTERNAL_URL;
 
 export async function ApiFetch(path: string, init?: RequestInit) {
-  if (!API_BASE) {
+  if (!API_BASE && !IS_BROWSER) {
     throw new Error("API base URL is not configured (API_INTERNAL_URL missing)");
   }
 
