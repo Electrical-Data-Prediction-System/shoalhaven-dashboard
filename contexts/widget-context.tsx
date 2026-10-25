@@ -23,6 +23,7 @@ export type WidgetFormConfig = {
     dataMode: "aggregate" | "readings"
     timePeriod: "5m" | "day" | "week" | "month" | "year"
     meterId: string
+    showForecast?: boolean
 }
 
 export type CreatedWidgetLayout = { x: number; y: number; w: number; h: number }

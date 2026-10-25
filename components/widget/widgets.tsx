@@ -2,7 +2,7 @@ import { FaDollarSign } from "react-icons/fa"
 import { FaGaugeHigh } from "react-icons/fa6"
 import { MdEnergySavingsLeaf } from "react-icons/md"
 
-import { GetAllAggregatedMeterPower } from "@/lib/api"
+import { GetAllMeterTotals } from "@/lib/api"
 import type { ApiPowerResponse } from "@/lib/chart-data"
 import { PowerUsageWidget } from "./power-usage-widget"
 import { StationTable } from "./station-table"
@@ -33,7 +33,7 @@ export const WIDGETS = {
   "meter-power-usage": {
     title: "Power Usage Overview",
     defaultSize: { w: 6, h: 4 },
-    load: () => GetAllAggregatedMeterPower(),
+    load: () => GetAllMeterTotals(),
     render: (data: ApiPowerResponse) => <PowerUsageWidget data={data} unit="kWh" />,
   },
   // "cost-overview": {

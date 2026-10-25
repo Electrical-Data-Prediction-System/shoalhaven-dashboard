@@ -1,9 +1,11 @@
 "use client"
 
 import {
+  Area,
   CartesianGrid,
+  ComposedChart,
   Line,
-  LineChart,
+  ReferenceLine,
   XAxis,
   YAxis,
 } from "recharts"
@@ -15,9 +17,12 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
-import type { ChartRow } from "@/lib/chart-data"
-import { formatChartDate, formatChartValue } from "@/lib/chart-format"
+import type { ForecastChartRow } from "@/lib/chart-data"
+import { complementColor, formatChartDate, formatSeriesValue } from "@/lib/chart-format"
 import type { WidgetFormConfig } from "@/contexts/widget-context";
+
+/** Above this many points, dots and animation make resizing sluggish */
+const MAX_DOTTED_POINTS = 60
 
 export function LineGraph({
   data,
@@ -25,20 +30,25 @@ export function LineGraph({
   color = "#217acc",
   dataMode,
   timePeriod,
+  forecastStart,
 }: {
-  data: ChartRow[]
+  data: ForecastChartRow[]
   unit?: string
   color?: string
   dataMode: WidgetFormConfig["dataMode"]
   timePeriod: WidgetFormConfig["timePeriod"]
+  /** x value where actual data ends and the forecast begins */
+  forecastStart?: string
 }) {
   const chartConfig = {
     kwh: { label: unit === "AUD" ? "Estimated cost" : "KWH", color },
+    forecast: { label: "Forecast", color: complementColor(color) },
+    band: { label: "Likely range", color: complementColor(color) },
   } satisfies ChartConfig
 
   return (
     <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
-      <LineChart data={data} accessibilityLayer margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
+      <ComposedChart data={data} accessibilityLayer margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="x"
@@ -55,22 +65,50 @@ export function LineGraph({
           content={
             <ChartTooltipContent
               labelFormatter={(value) => formatChartDate(String(value), dataMode, timePeriod)}
-              formatter={(value) => unit === "AUD"
-                ? [formatChartValue(Number(value), unit), ""]
-                : [formatChartValue(Number(value), unit ?? "kWh"), unit ?? "kWh"]}
+              formatter={(value, name) => formatSeriesValue(value, name, unit)}
             />
           }
         />
         <ChartLegend content={<ChartLegendContent />} />
+        {forecastStart && (
+          <Area
+            dataKey="band"
+            type="monotone"
+            stroke="none"
+            fill="var(--color-band)"
+            fillOpacity={0.15}
+            activeDot={false}
+            legendType="square"
+          />
+        )}
+        {forecastStart && (
+          <Line
+            dataKey="forecast"
+            type="monotone"
+            stroke="var(--color-forecast)"
+            strokeWidth={2}
+            strokeDasharray="5 4"
+            dot={false}
+          />
+        )}
+        {forecastStart && (
+          <ReferenceLine
+            x={forecastStart}
+            stroke="var(--muted-foreground)"
+            strokeDasharray="3 3"
+            label={{ value: "Forecast →", position: "insideTopLeft", fontSize: 11, fill: "var(--muted-foreground)" }}
+          />
+        )}
         <Line
           dataKey="kwh"
           type="monotone"
           stroke="var(--color-kwh)"
           strokeWidth={2}
-          dot={{ r: 3, fill: "var(--color-kwh)" }}
+          dot={data.length <= MAX_DOTTED_POINTS && { r: 3, fill: "var(--color-kwh)" }}
           activeDot={{ r: 5 }}
+          isAnimationActive={data.length <= MAX_DOTTED_POINTS}
         />
-      </LineChart>
+      </ComposedChart>
     </ChartContainer>
   )
 }

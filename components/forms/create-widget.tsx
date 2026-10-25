@@ -14,19 +14,24 @@ import { Button } from "@/components/ui/button";
 import { useWidgetContext, type CreatedWidget, type WidgetFormConfig } from "@/contexts/widget-context";
 import { useModal } from "./modal";
 import { GetMeter, SearchMetersByLocation, type MeterSearchResult } from "@/lib/api";
+import { forecastGranularity } from "@/lib/widget-data";
 
 export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedWidget }) {
   const { closeModal } = useModal();
   const { onCreateWidget, updateCreatedWidget } = useWidgetContext();
+  const [chartType, setChartType] = useState<WidgetFormConfig["type"] | undefined>(initialWidget?.type);
   const [dataMode, setDataMode] = useState<WidgetFormConfig["dataMode"]>(initialWidget?.dataMode ?? "aggregate");
   const [timePeriod, setTimePeriod] = useState<WidgetFormConfig["timePeriod"]>(initialWidget?.timePeriod ?? "month");
   const [locationQuery, setLocationQuery] = useState("");
   const [meters, setMeters] = useState<MeterSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [showForecast, setShowForecast] = useState(initialWidget?.showForecast ?? false);
   const selectedTimePeriod = dataMode === "aggregate"
-    ? (timePeriod === "day" ? "month" : timePeriod)
+    ? timePeriod
     : (timePeriod === "5m" ? "day" : timePeriod)
+  const forecastAvailable = chartType !== undefined
+    && forecastGranularity({ type: chartType, dataMode, timePeriod: selectedTimePeriod }) !== null
 
   useEffect(() => {
     if (!initialWidget) return
@@ -96,6 +101,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
       dataMode: dataMode as WidgetFormConfig["dataMode"],
       timePeriod: timePeriod as WidgetFormConfig["timePeriod"],
       meterId,
+      showForecast: forecastAvailable && showForecast,
     };
 
     if (initialWidget) {
@@ -132,7 +138,12 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label htmlFor="type" className="text-sm font-medium">Chart type</label>
-            <Select name="type" defaultValue={initialWidget?.type} required>
+            <Select
+              name="type"
+              defaultValue={initialWidget?.type}
+              onValueChange={(value) => setChartType(value as WidgetFormConfig["type"])}
+              required
+            >
               <SelectTrigger id="type" className="h-10 w-full bg-background">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
@@ -224,6 +235,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
               {dataMode === "aggregate" ? (
                 <>
                   <SelectItem value="5m">Every 5 minutes</SelectItem>
+                  <SelectItem value="day">Every day</SelectItem>
                   <SelectItem value="week">Every week</SelectItem>
                   <SelectItem value="month">Every month</SelectItem>
                   <SelectItem value="year">Every year</SelectItem>
@@ -238,6 +250,27 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
               )}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              name="showForecast"
+              checked={forecastAvailable && showForecast}
+              disabled={!forecastAvailable}
+              onChange={(event) => setShowForecast(event.target.checked)}
+              className="size-4 cursor-pointer accent-primary disabled:cursor-not-allowed"
+            />
+            Show forecast
+          </label>
+          <p className="text-xs text-muted-foreground">
+            {forecastAvailable
+              ? dataMode === "readings"
+                ? "Adds the next 7 days of hourly predicted usage."
+                : "Adds the next 30 days of daily predicted usage."
+              : "Available for line and area charts showing raw readings or daily buckets."}
+          </p>
         </div>
 
         <div className="flex justify-end gap-2 border-t border-border pt-4">

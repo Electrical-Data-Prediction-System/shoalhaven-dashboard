@@ -53,3 +53,55 @@ test("opens the chart form and searches for a meter", async ({ page }) => {
   await page.getByLabel("Meter").click()
   await expect(page.getByRole("option", { name: /10 Main Street, Nowra/ })).toBeVisible()
 })
+
+test("creates a daily chart with a forecast overlay", async ({ page }) => {
+  await page.route("**/api/meters/meter-1/**", async (route) => {
+    const url = new URL(route.request().url())
+    if (url.pathname.endsWith("/forecast")) {
+      await route.fulfill({
+        json: {
+          meterId: "meter-1",
+          granularity: "day",
+          model: "timestral-5M",
+          generatedAt: "2026-01-04T00:00:00",
+          anchor: "2026-01-02T13:00:00",
+          points: [
+            { x: "2026-01-02T13:00:00", p10: 9, p50: 11, p90: 13 },
+            { x: "2026-01-03T13:00:00", p10: 10, p50: 12, p90: 14 },
+          ],
+          backtest: { horizon: 30, modelMae: 1, baselineMae: 2, modelMape: 1.2, baselineMape: 2.2 },
+        },
+      })
+      return
+    }
+    await route.fulfill({
+      json: {
+        series: [{
+          name: "KWH",
+          data: [
+            { x: "2025-12-31T13:00:00", y: 10 },
+            { x: "2026-01-01T13:00:00", y: 12 },
+            { x: "2026-01-02T13:00:00", y: 11 },
+          ],
+        }],
+      },
+    })
+  })
+
+  await page.goto("/")
+  await page.getByRole("button", { name: "Create Chart" }).click()
+  await page.getByLabel("Chart name").fill("Daily usage")
+  await page.getByLabel("Chart type").click()
+  await page.getByRole("option", { name: "Line" }).click()
+  await page.getByLabel("Search location").fill("Nowra")
+  await page.getByLabel("Meter").click()
+  await page.getByRole("option", { name: /10 Main Street, Nowra/ }).click()
+  await page.getByLabel("Bucket interval").click()
+  await page.getByRole("option", { name: "Every day" }).click()
+  await page.getByLabel("Show forecast").check()
+  await page.getByRole("button", { name: "Create chart", exact: true }).click()
+
+  await expect(page.getByText("Forecast →")).toBeVisible()
+  await page.getByRole("button", { name: "Maximize Daily usage" }).click()
+  await expect(page.getByText(/1\.2% average error, vs 2\.2%/)).toBeVisible()
+})
