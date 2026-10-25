@@ -4,13 +4,7 @@ import { useMemo, useState } from "react"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useWidgetContext, type CreatedWidget } from "@/features/dashboard/context/widget-context"
 import { useModal } from "@/components/forms/modal"
@@ -169,7 +163,7 @@ export function WidgetFullscreen({
         </header>
         <div className="min-h-0 flex-1">
           {isLoading && <Skeleton className="h-full w-full" />}
-          {error && <p className="p-2 text-sm text-destructive">Failed to load: {error.message}</p>}
+          {error && <p className="line-clamp-3 break-words p-2 text-sm text-destructive" title={error.message}>Failed to load: {error.message}</p>}
           {!isLoading && !error && metric === "cost" && !costData.length && (
             <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
               Set an energy rate to view estimated cost.

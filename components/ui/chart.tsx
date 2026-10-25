@@ -318,7 +318,7 @@ function ChartLegendContent({
                   }}
                 />
               )}
-              <span className="truncate" title={String(itemConfig?.label ?? "")}>
+              <span className="truncate max-w-[10ch]" title={String(itemConfig?.label ?? "")}>
                 {itemConfig?.label}
               </span>
             </div>

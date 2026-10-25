@@ -67,8 +67,8 @@ export function GetAllAggregatedMeterPower(
 ): Promise<ApiPowerResponse> {
   const params = new URLSearchParams();
 
-  if (start) params.set("start", start.toISOString().split('T')[0]);
-  if (end) params.set("end", end.toISOString().split('T')[0]);
+  if (start) params.set("start", raw ? start.toISOString() : start.toISOString().split('T')[0]);
+  if (end) params.set("end", raw ? end.toISOString() : end.toISOString().split('T')[0]);
   if (interval) params.set("interval", interval);
   for (const meterId of meterIds) params.append("meterIds", meterId);
 

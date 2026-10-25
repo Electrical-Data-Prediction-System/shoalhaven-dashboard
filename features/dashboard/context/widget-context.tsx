@@ -22,7 +22,7 @@ export type WidgetFormConfig = {
     name: string
     type: "line" | "area" | "bar" | "pie" | "datatable"
     dataMode: "aggregate" | "readings"
-    timePeriod: "5m" | "day" | "week" | "month" | "year"
+    timePeriod: "5m" | "day" | "latest" | "week" | "month" | "year"
     meterIds: string[]
     meterDetails?: MeterSearchResult[]
 }

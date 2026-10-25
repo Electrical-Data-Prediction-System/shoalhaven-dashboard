@@ -1,4 +1,4 @@
-import { GetAllAggregatedMeterPower } from "@/lib/api"
+import { GetAllAggregatedMeterPower, GetLatestReadingTimestamp } from "@/lib/api"
 import type { CreatedWidget, WidgetFormConfig } from "@/features/dashboard/context/widget-context"
 import { toChartRows, type ChartRow } from "@/lib/chart-data"
 
@@ -40,6 +40,26 @@ export async function loadWidgetData(config: WidgetFormConfig | CreatedWidget): 
   if (config.dataMode === "aggregate") {
     const interval = config.timePeriod === "day" ? "month" : config.timePeriod
     const response = await GetAllAggregatedMeterPower(undefined, undefined, interval, meterIds)
+    return toChartRows(response)
+  }
+
+  if (config.timePeriod === "latest") {
+    const timestamps = await Promise.all(meterIds.map(GetLatestReadingTimestamp))
+    const latestTimestamp = timestamps.reduce<Date | null>((latest, timestamp) => {
+      if (!timestamp) return latest
+
+      const date = new Date(timestamp)
+      if (Number.isNaN(date.getTime())) {
+        throw new TypeError(`Invalid latest reading timestamp: ${timestamp}`)
+      }
+
+      return latest && latest > date ? latest : date
+    }, null)
+
+    if (!latestTimestamp) return []
+
+    const start = new Date(latestTimestamp.getTime() - 24 * 60 * 60 * 1000)
+    const response = await GetAllAggregatedMeterPower(start, latestTimestamp, undefined, meterIds, true)
     return toChartRows(response)
   }
 

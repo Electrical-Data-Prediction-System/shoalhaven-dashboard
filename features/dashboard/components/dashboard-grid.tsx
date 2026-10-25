@@ -87,7 +87,14 @@ export function DashboardGrid() {
             containerRef.current?.classList.remove("select-none")
             persistLayout(layout)
           }}
-          onResizeStop={(layout) => persistLayout(layout)}
+          onResizeStart={() => {
+            containerRef.current?.classList.add("select-none")
+            window.getSelection()?.removeAllRanges()
+          }}
+          onResizeStop={(layout) => {
+            containerRef.current?.classList.remove("select-none")
+            persistLayout(layout)
+          }}
           onDragStart={() => {
             containerRef.current?.classList.add("select-none")
             window.getSelection()?.removeAllRanges()

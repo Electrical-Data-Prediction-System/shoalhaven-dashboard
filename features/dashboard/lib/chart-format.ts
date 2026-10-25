@@ -33,6 +33,7 @@ export function formatTableDate(
   const aggregateOptions: Record<WidgetFormConfig["timePeriod"], Intl.DateTimeFormatOptions> = {
     "5m": { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" },
     day: { day: "numeric", month: "short", year: "numeric" },
+    latest: { day: "numeric", month: "short", year: "numeric" },
     week: { day: "numeric", month: "short", year: "numeric" },
     month: { month: "short", year: "numeric" },
     year: { year: "numeric" },
@@ -57,6 +58,7 @@ export function formatChartDate(
   const aggregateOptions: Record<WidgetFormConfig["timePeriod"], Intl.DateTimeFormatOptions> = {
     "5m": { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" },
     day: { month: "short", day: "numeric" },
+    latest: { month: "short", day: "numeric" },
     week: { month: "short", day: "numeric" },
     month: { month: "short", year: "2-digit" },
     year: { year: "numeric" },
@@ -64,6 +66,7 @@ export function formatChartDate(
   const rawOptions: Record<WidgetFormConfig["timePeriod"], Intl.DateTimeFormatOptions> = {
     "5m": { hour: "2-digit", minute: "2-digit", hourCycle: "h23" },
     day: { hour: "2-digit", minute: "2-digit", hourCycle: "h23" },
+    latest: { hour: "2-digit", minute: "2-digit", hourCycle: "h23" },
     week: { weekday: "short", hour: "numeric" },
     month: { month: "short", day: "numeric" },
     year: { month: "short", year: "2-digit" },

@@ -68,6 +68,30 @@ describe("dashboard API helpers", () => {
     )
   })
 
+  it("preserves timestamp precision for raw meter power date ranges", async () => {
+    const response: never[] = []
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue(response),
+    })
+    vi.stubGlobal("fetch", fetchMock)
+
+    const { GetAllAggregatedMeterPower } = await import("./api")
+
+    await GetAllAggregatedMeterPower(
+      new Date("2026-01-04T12:30:00.000Z"),
+      new Date("2026-01-05T12:30:00.000Z"),
+      undefined,
+      ["meter-1"],
+      true,
+    )
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/meters/power/raw-power?start=2026-01-04T12%3A30%3A00.000Z&end=2026-01-05T12%3A30%3A00.000Z&meterIds=meter-1",
+      undefined,
+    )
+  })
+
   it("reports HTTP errors instead of returning a success-shaped value", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }))
 

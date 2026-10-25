@@ -1,7 +1,7 @@
 "use client"
 
 import { memo, useState } from "react"
-import { Maximize2, Pencil, Trash2, X } from "lucide-react"
+import { Maximize2, Pencil, Trash2, X, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useModal } from "@/components/forms/modal"
@@ -107,7 +107,7 @@ export const WidgetShell = memo(function WidgetShell({
           </Button>
         </div>
       </div>
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 line-clamp-3 overflow-hidden">
         <WidgetContent def={def} />
       </div>
     </div>
@@ -167,7 +167,7 @@ function DataWidgetContent({ def }: { def: DataWidget }) {
   const { data, error, isLoading } = useApiData(def.load)
 
   if (isLoading) return <Skeleton className="h-full w-full" />
-  if (error) return <p className="p-2 text-sm text-destructive">Failed to load: {error.message}</p>
+  if (error) return <p className="line-clamp-3 break-words p-2 text-sm text-destructive" title={error.message}>Failed to load: {error.message}</p>
   if (!data) return null
 
   return <>{def.render(data)}</>

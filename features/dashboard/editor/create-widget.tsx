@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useWidgetContext, type CreatedWidget, type WidgetFormConfig } from "@/features/dashboard/context/widget-context";
 import { useModal } from "@/components/forms/modal";
-import { GetMeter, SearchMetersByLocation, type MeterSearchResult } from "@/lib/api";
+import { SearchMetersByLocation, type MeterSearchResult } from "@/lib/api";
 import { getWidgetMeterIds } from "@/features/dashboard/lib/widget-data";
 
 function mergeMeters(...groups: MeterSearchResult[][]): MeterSearchResult[] {
@@ -29,7 +29,9 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
   const { onCreateWidget, updateCreatedWidget } = useWidgetContext();
   const [dataMode, setDataMode] = useState<WidgetFormConfig["dataMode"]>(initialWidget?.dataMode ?? "aggregate");
   const [timePeriod, setTimePeriod] = useState<WidgetFormConfig["timePeriod"]>(
-    initialWidget?.dataMode === "readings" ? "day" : initialWidget?.timePeriod ?? "month",
+    initialWidget?.dataMode === "readings"
+      ? initialWidget.timePeriod === "latest" ? "latest" : "day"
+      : initialWidget?.timePeriod ?? "month",
   );
   const [selectedMeterIds, setSelectedMeterIds] = useState<string[]>(() =>
     initialWidget ? getWidgetMeterIds(initialWidget) : [],
@@ -44,30 +46,8 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
   const [meterSelectionError, setMeterSelectionError] = useState<string | null>(null);
   const meters = mergeMeters(selectedMeters, searchMeters);
   const selectedTimePeriod = dataMode === "aggregate"
-    ? (timePeriod === "day" ? "month" : timePeriod)
+    ? (timePeriod === "day" || timePeriod === "latest" ? "month" : timePeriod)
     : (timePeriod === "5m" ? "day" : timePeriod)
-
-  useEffect(() => {
-    if (!initialWidget) return
-
-    let cancelled = false
-    Promise.all(getWidgetMeterIds(initialWidget).map((meterId) => GetMeter(meterId)))
-      .then((results) => {
-        if (cancelled) return
-        const selectedMeters = results.map(({ meterObject }) => meterObject)
-        setSelectedMeters((current) => mergeMeters(current, selectedMeters))
-        setLocationQuery(selectedMeters[0]?.location.fullAddress ?? "")
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          setSearchError(error instanceof Error ? error.message : "Could not load the selected meter")
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [initialWidget])
 
   useEffect(() => {
     const location = locationQuery.trim();
@@ -162,7 +142,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
           <div className="space-y-1.5">
             <label htmlFor="type" className="text-sm font-medium">Chart type</label>
             <Select name="type" defaultValue={initialWidget?.type} required>
-              <SelectTrigger id="type" className="h-10 w-full bg-background">
+              <SelectTrigger id="type" className="h-10 w-full bg-background capitalize">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent className="pointer-events-auto">
@@ -187,7 +167,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
               }}
               required
             >
-              <SelectTrigger id="dataMode" className="h-10 w-full bg-background">
+              <SelectTrigger id="dataMode" className="h-10 w-full bg-background capitalize">
                 <SelectValue placeholder="Choose data mode" />
               </SelectTrigger>
               <SelectContent>
@@ -277,7 +257,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
             modal={false}
             required
           >
-            <SelectTrigger id="timePeriod" className="h-10 w-full bg-background">
+            <SelectTrigger id="timePeriod" className="h-10 w-full bg-background capitalize">
               <SelectValue placeholder="Select time period" />
             </SelectTrigger>
             <SelectContent>
@@ -289,7 +269,10 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
                   <SelectItem value="year">Every year</SelectItem>
                 </>
               ) : (
-                <SelectItem value="day">Last day</SelectItem>
+                <>
+                  <SelectItem value="day">Last day</SelectItem>
+                  <SelectItem value="latest">Most recent day</SelectItem>
+                </>
               )}
             </SelectContent>
           </Select>

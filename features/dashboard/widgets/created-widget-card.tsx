@@ -22,7 +22,7 @@ interface WidgetBodyProps {
 
 function WidgetBody({ widget, data, error, isLoading }: WidgetBodyProps) {
   if (isLoading) return <Skeleton className="h-full w-full" />
-  if (error) return <p className="p-2 text-sm text-destructive">Failed to load: {error.message}</p>
+  if (error) return <p className=" break-words p-2 text-sm text-destructive" title={error.message}>Failed to load: {error.message}</p>
   if (!data?.length) {
     return (
       <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
