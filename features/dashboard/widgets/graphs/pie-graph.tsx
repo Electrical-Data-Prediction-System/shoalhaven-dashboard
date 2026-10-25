@@ -1,7 +1,6 @@
 import { useMemo } from "react"
 import { Cell, Pie, PieChart } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig} from "@/components/ui/chart"
-import { toMultiSeriesChartData} from "@/lib/chart-data"
 import { formatChartDate } from "@/features/dashboard/lib/chart-format"
 import { type GraphProps, formatTooltipValue } from "./graph-common"
 
@@ -24,25 +23,27 @@ export function PieGraph({data,unit = "kWh", dataMode, timePeriod}: GraphProps) 
   } satisfies ChartConfig
   
   const pieData = useMemo(() => {
-    const { series } = toMultiSeriesChartData(data)
-
-    if (series.length > 1) {
-      return series.map(({ name }) => ({
-        name,
-        value: data
-          .filter((row) => row.series === name)
-          .reduce((sum, row) => sum + row.kwh, 0),
-      })).sort((a, b) => b.value - a.value)
-    }
-
-    const grouped = new Map<string, number>()
+    const seriesTotals = new Map<string, number>()
+    const dateTotals = new Map<string, number>()
+    const labelsByDate = new Map<string, string>()
 
     for (const row of data) {
-      const label = formatChartDate(row.x, dataMode, timePeriod)
-      grouped.set(label, (grouped.get(label) ?? 0) + row.kwh)
+      const seriesName = row.series ?? "kwh"
+      seriesTotals.set(
+        seriesName,
+        (seriesTotals.get(seriesName) ?? 0) + row.kwh,
+      )
+
+      let label = labelsByDate.get(row.x)
+      if (label === undefined) {
+        label = formatChartDate(row.x, dataMode, timePeriod)
+        labelsByDate.set(row.x, label)
+      }
+      dateTotals.set(label, (dateTotals.get(label) ?? 0) + row.kwh)
     }
 
-    const sorted = [...grouped]
+    const totals = seriesTotals.size > 1 ? seriesTotals : dateTotals
+    const sorted = [...totals]
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
 
@@ -52,9 +53,7 @@ export function PieGraph({data,unit = "kWh", dataMode, timePeriod}: GraphProps) 
       ...sorted.slice(0, 7),
       {
         name: "Other",
-        value: sorted
-          .slice(7)
-          .reduce((sum, entry) => sum + entry.value, 0),
+        value: sorted.slice(7).reduce((sum, entry) => sum + entry.value, 0),
       },
     ]
   }, [data, dataMode, timePeriod])
