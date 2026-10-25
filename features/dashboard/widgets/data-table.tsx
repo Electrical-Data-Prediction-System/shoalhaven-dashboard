@@ -10,9 +10,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { ChartRow } from "@/lib/chart-data"
-import { formatChartValue, formatTableDate } from "@/lib/chart-format"
+import { formatChartValue, formatTableDate } from "@/features/dashboard/lib/chart-format"
 import { cn } from "@/lib/utils"
-import type { WidgetFormConfig } from "@/contexts/widget-context"
+import type { WidgetFormConfig } from "@/features/dashboard/context/widget-context"
 
 type SortKey = "time" | "value"
 type SortState = { key: SortKey; direction: "asc" | "desc" }

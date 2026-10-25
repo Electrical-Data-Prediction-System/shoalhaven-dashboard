@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { GetAllAggregatedMeterPower } from "@/lib/api"
-import type { WidgetFormConfig } from "@/contexts/widget-context"
+import type { WidgetFormConfig } from "@/features/dashboard/context/widget-context"
 import { loadWidgetData } from "./widget-data"
 
 vi.mock("@/lib/api", () => ({

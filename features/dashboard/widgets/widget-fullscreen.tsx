@@ -12,12 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useWidgetContext, type CreatedWidget } from "@/contexts/widget-context"
+import { useWidgetContext, type CreatedWidget } from "@/features/dashboard/context/widget-context"
 import { useModal } from "@/components/forms/modal"
 import { CHART_SERIES_COLORS, type ChartRow } from "@/lib/chart-data"
-import { formatTableDate } from "@/lib/chart-format"
+import { formatTableDate } from "@/features/dashboard/lib/chart-format"
 import { WidgetVisualization } from "./widget-visualization"
-import { getWidgetMeterIds } from "@/lib/widget-data"
+import { getWidgetMeterIds } from "@/features/dashboard/lib/widget-data"
 
 const currencyFormatter = new Intl.NumberFormat(undefined, {
   style: "currency",

@@ -2,8 +2,8 @@
 
 import { createContext, ReactNode, useContext, useRef, useState } from "react"
 import { useLocalStorage } from "@/hooks/useLocalStorage"
-import type { PlacedWidget } from "@/components/widget/types"
-import type { WidgetType } from "@/components/widget/widgets"
+import type { PlacedWidget } from "@/features/dashboard/widgets/types"
+import type { WidgetType } from "@/features/dashboard/widgets/widgets"
 import type { MeterSearchResult } from "@/lib/api"
 
 export const DEFAULT_PLACED: PlacedWidget<WidgetType>[] = [

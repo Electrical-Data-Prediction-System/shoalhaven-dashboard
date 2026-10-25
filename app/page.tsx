@@ -1,4 +1,4 @@
-import { DashboardGrid } from "@/components/dashboard-refactored";
+import { DashboardGrid } from "@/features/dashboard/components/dashboard-grid";
 
 export default function Home() {
   return (

@@ -1,29 +1,26 @@
 "use client"
 
 import { useApiData } from "@/hooks/use-ApiData"
-import { loadWidgetData } from "@/lib/widget-data"
+import { loadCachedWidgetData, loadWidgetData } from "@/features/dashboard/lib/widget-data"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Maximize2, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useWidgetContext, type CreatedWidget } from "@/contexts/widget-context"
-import WidgetForm from "@/components/forms/create-widget"
+import { useWidgetContext, type CreatedWidget } from "@/features/dashboard/context/widget-context"
+import WidgetForm from "@/features/dashboard/editor/create-widget"
 import { useModal } from "@/components/forms/modal"
 import type { ChartRow } from "@/lib/chart-data"
 import { WidgetVisualization } from "./widget-visualization"
 import { WidgetFullscreen } from "./widget-fullscreen"
-import { getWidgetMeterIds } from "@/lib/widget-data"
+import { getWidgetMeterIds } from "@/features/dashboard/lib/widget-data"
 
-function WidgetBody({
-  widget,
-  data,
-  error,
-  isLoading,
-}: {
-  widget: CreatedWidget
-  data?: ChartRow[]
-  error?: Error
+interface WidgetBodyProps {
+  widget: CreatedWidget,
+  data?: ChartRow[],
+  error?: Error,
   isLoading: boolean
-}) {
+}
+
+function WidgetBody({ widget, data, error, isLoading }: WidgetBodyProps) {
   if (isLoading) return <Skeleton className="h-full w-full" />
   if (error) return <p className="p-2 text-sm text-destructive">Failed to load: {error.message}</p>
   if (!data?.length) {
@@ -40,7 +37,7 @@ function WidgetBody({
 export function CreatedWidgetCard({ widget }: { widget: CreatedWidget }) {
   const meterIds = getWidgetMeterIds(widget)
   const { data, error, isLoading } = useApiData(
-    () => loadWidgetData(widget),
+    () => loadCachedWidgetData(widget),
     [widget.id, meterIds.join(","), widget.dataMode, widget.timePeriod],
   )
   const { deleteCreatedWidget } = useWidgetContext()

@@ -1,9 +1,9 @@
-import { BarGraph } from "./bar-graph"
-import { LineGraph } from "./line-graph"
-import { AreaGraph } from "./area-graph"
-import { PieGraph } from "./pie-graph"
+import { BarGraph } from "./graphs/bar-graph"
+import { LineGraph } from "./graphs/line-graph"
+import { AreaGraph } from "./graphs/area-graph"
+import { PieGraph } from "./graphs/pie-graph"
 import { DataTable } from "./data-table"
-import type { CreatedWidget } from "@/contexts/widget-context"
+import type { CreatedWidget } from "@/features/dashboard/context/widget-context"
 import type { ChartRow } from "@/lib/chart-data"
 
 export function WidgetVisualization({

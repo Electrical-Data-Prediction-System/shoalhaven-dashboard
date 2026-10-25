@@ -9,10 +9,10 @@ import {
 } from "react-grid-layout"
 import "react-grid-layout/css/styles.css"
 
-import { WidgetShell } from "@/components/widget/widget-shell"
-import { CreatedWidgetCard } from "@/components/widget/created-widget-card"
-import { WIDGETS } from "@/components/widget/widgets"
-import { DEFAULT_PLACED, useWidgetContext } from "@/contexts/widget-context"
+import { WidgetShell } from "@/features/dashboard/widgets/widget-shell"
+import { CreatedWidgetCard } from "@/features/dashboard/widgets/created-widget-card"
+import { WIDGETS } from "@/features/dashboard/widgets/widgets"
+import { DEFAULT_PLACED, useWidgetContext } from "@/features/dashboard/context/widget-context"
 import { cn } from "@/lib/utils"
 
 export function DashboardGrid() {

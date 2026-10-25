@@ -11,10 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useWidgetContext, type CreatedWidget, type WidgetFormConfig } from "@/contexts/widget-context";
-import { useModal } from "./modal";
+import { useWidgetContext, type CreatedWidget, type WidgetFormConfig } from "@/features/dashboard/context/widget-context";
+import { useModal } from "@/components/forms/modal";
 import { GetMeter, SearchMetersByLocation, type MeterSearchResult } from "@/lib/api";
-import { getWidgetMeterIds } from "@/lib/widget-data";
+import { getWidgetMeterIds } from "@/features/dashboard/lib/widget-data";
 
 function mergeMeters(...groups: MeterSearchResult[][]): MeterSearchResult[] {
   const metersById = new Map<string, MeterSearchResult>()

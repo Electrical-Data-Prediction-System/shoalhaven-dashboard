@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Button } from "../ui/button"
+import { Button } from "@/components/ui/button"
 
 const stationPowerUsageData = [
   { name: "Staion 1", KPI: "4,694", KWH: "340", bounceRate: "46.53%" },

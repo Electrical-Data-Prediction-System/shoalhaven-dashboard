@@ -1,4 +1,4 @@
-import type { WidgetFormConfig } from "@/contexts/widget-context"
+import type { WidgetFormConfig } from "@/features/dashboard/context/widget-context"
 
 export function formatChartValue(value: number, unit: string) {
   if (unit === "AUD") {

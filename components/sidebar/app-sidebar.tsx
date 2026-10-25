@@ -26,10 +26,10 @@ import {
 
 import { SidebarMain } from "./sidebar-main"
 import { useModal } from "../forms/modal"
-import WidgetForm from "../forms/create-widget"
+import WidgetForm from "@/features/dashboard/editor/create-widget"
 
-import { WIDGETS } from "@/components/widget/widgets"
-import { useWidgetContext } from "@/contexts/widget-context"
+import { WIDGETS } from "@/features/dashboard/widgets/widgets"
+import { useWidgetContext } from "@/features/dashboard/context/widget-context"
 
 const otherSections = [
   {

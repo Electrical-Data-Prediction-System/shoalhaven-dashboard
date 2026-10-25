@@ -5,10 +5,10 @@ import { MdEnergySavingsLeaf } from "react-icons/md"
 import { GetAllAggregatedMeterPower, SumReadingsBetween } from "@/lib/api"
 import type { ApiPowerResponse } from "@/lib/chart-data"
 import { PowerUsageWidget } from "./power-usage-widget"
-import { StationTable } from "./station-table"
-import { StatCard } from "./stat-card"
+import { StationTable } from "./template/station-table"
+import { StatCard } from "./template/stat-card"
 import type { WidgetDefinition } from "./types"
-import EnergyCost from "./energy-cost"
+import EnergyCost from "./template/energy-cost"
 
 // Pre-built widgets. Add a widget by adding one entry here. 
 export const WIDGETS = {
