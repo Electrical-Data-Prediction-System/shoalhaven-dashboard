@@ -1,6 +1,5 @@
 "use client"
 
-import { useId } from "react"
 import {
   Area,
   AreaChart,
@@ -17,36 +16,34 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 import type { WidgetFormConfig } from "@/contexts/widget-context"
-import type { ChartRow } from "@/lib/chart-data"
+import { CHART_SERIES_COLORS, toMultiSeriesChartData, type ChartRow } from "@/lib/chart-data"
 import { formatChartDate, formatChartValue } from "@/lib/chart-format"
 
 export function AreaGraph({
   data,
   unit = "kWh",
-  color = "#217acc",
+  seriesColors = {},
   dataMode,
   timePeriod,
 }: {
   data: ChartRow[]
   unit?: string
-  color?: string
+  seriesColors?: Record<string, string>
   dataMode: WidgetFormConfig["dataMode"]
   timePeriod: WidgetFormConfig["timePeriod"]
 }) {
-  const chartConfig = {
-    kwh: { label: unit === "AUD" ? "Estimated cost" : "KWH", color },
-  } satisfies ChartConfig
-  const gradientId = useId().replaceAll(":", "")
+  const { data: chartData, series } = toMultiSeriesChartData(data)
+  const chartConfig: ChartConfig = Object.fromEntries(series.map(({ key, name }, index) => [
+    key,
+    {
+      label: name === "kwh" ? (unit === "AUD" ? "Estimated cost" : "KWH") : name,
+      color: seriesColors[name] ?? CHART_SERIES_COLORS[index % CHART_SERIES_COLORS.length],
+    },
+  ]))
 
   return (
     <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
-      <AreaChart data={data} accessibilityLayer margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
-        <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-kwh)" stopOpacity={0.45} />
-            <stop offset="95%" stopColor="var(--color-kwh)" stopOpacity={0.04} />
-          </linearGradient>
-        </defs>
+      <AreaChart data={chartData} accessibilityLayer margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="x"
@@ -70,15 +67,23 @@ export function AreaGraph({
           }
         />
         <ChartLegend content={<ChartLegendContent />} />
-        <Area
-          dataKey="kwh"
-          type="monotone"
-          stroke="var(--color-kwh)"
-          strokeWidth={2}
-          fill={`url(#${gradientId})`}
-          dot={{ r: 3, fill: "var(--color-kwh)" }}
-          activeDot={{ r: 5 }}
-        />
+        {series.map(({ key, name }, index) => {
+          const fill = seriesColors[name] ?? CHART_SERIES_COLORS[index % CHART_SERIES_COLORS.length]
+          return (
+          <Area
+            key={key}
+            dataKey={key}
+            name={name}
+            type="monotone"
+            stroke={fill}
+            strokeWidth={2}
+            fill={fill}
+            fillOpacity={0.08}
+            dot={{ r: 3, fill }}
+            activeDot={{ r: 5 }}
+          />
+          )
+        })}
       </AreaChart>
     </ChartContainer>
   )

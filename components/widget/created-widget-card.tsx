@@ -11,6 +11,7 @@ import { useModal } from "@/components/forms/modal"
 import type { ChartRow } from "@/lib/chart-data"
 import { WidgetVisualization } from "./widget-visualization"
 import { WidgetFullscreen } from "./widget-fullscreen"
+import { getWidgetMeterIds } from "@/lib/widget-data"
 
 function WidgetBody({
   widget,
@@ -32,13 +33,15 @@ function WidgetBody({
       </p>
     )
   }
-  return <WidgetVisualization widget={widget} data={data} />
+  const seriesColors = widget.colorsByMeter ?? {}
+  return <WidgetVisualization widget={widget} data={data} seriesColors={seriesColors} />
 }
 
 export function CreatedWidgetCard({ widget }: { widget: CreatedWidget }) {
+  const meterIds = getWidgetMeterIds(widget)
   const { data, error, isLoading } = useApiData(
     () => loadWidgetData(widget),
-    [widget.id, widget.meterId, widget.dataMode, widget.timePeriod],
+    [widget.id, meterIds.join(","), widget.dataMode, widget.timePeriod],
   )
   const { deleteCreatedWidget } = useWidgetContext()
   const { openModal, closeModal } = useModal()

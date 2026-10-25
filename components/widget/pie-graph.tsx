@@ -6,7 +6,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
-import type { ChartRow } from "@/lib/chart-data"
+import { toMultiSeriesChartData, type ChartRow } from "@/lib/chart-data"
 import { formatChartDate, formatChartValue } from "@/lib/chart-format"
 import type { WidgetFormConfig } from "@/contexts/widget-context"
 
@@ -35,7 +35,18 @@ export function PieGraph({
   const chartConfig = {
     value: { label: unit === "AUD" ? "Estimated cost" : "KWH", color: "var(--color-brand-secondary-700)" },
   } satisfies ChartConfig
+  
   const pieData = useMemo(() => {
+    const { series } = toMultiSeriesChartData(data)
+    if (series.length > 1) {
+      return series.map(({ name }) => ({
+        name,
+        value: data
+          .filter((row) => row.series === name)
+          .reduce((sum, row) => sum + row.kwh, 0),
+      })).sort((a, b) => b.value - a.value)
+    }
+
     const grouped = new Map<string, number>()
     for (const row of data) {
       const label = formatChartDate(row.x, dataMode, timePeriod)

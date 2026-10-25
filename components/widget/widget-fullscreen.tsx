@@ -14,16 +14,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { useWidgetContext, type CreatedWidget } from "@/contexts/widget-context"
 import { useModal } from "@/components/forms/modal"
-import type { ChartRow } from "@/lib/chart-data"
+import { CHART_SERIES_COLORS, type ChartRow } from "@/lib/chart-data"
 import { formatTableDate } from "@/lib/chart-format"
 import { WidgetVisualization } from "./widget-visualization"
+import { getWidgetMeterIds } from "@/lib/widget-data"
 
 const currencyFormatter = new Intl.NumberFormat(undefined, {
   style: "currency",
   currency: "AUD",
 })
 
-type RatePeriod = { key: string; label: string; x: string; kwh: number }
+type RatePeriod = { key: string; meterId: string; label: string; x: string; kwh: number }
 const EMPTY_CHART_DATA: ChartRow[] = []
 
 function getSydneyDateKey(value: string) {
@@ -40,7 +41,8 @@ function getSydneyDateKey(value: string) {
 
 function getRatePeriods(widget: CreatedWidget, data: ChartRow[]): RatePeriod[] {
   const groupByDay = widget.dataMode === "readings" || widget.timePeriod === "5m"
-  const grouped = new Map<string, number>()
+  const defaultMeterId = getWidgetMeterIds(widget)[0] ?? "kwh"
+  const grouped = new Map<string, { meterId: string; key: string; kwh: number }>()
 
   for (const row of data) {
     const key = groupByDay
@@ -48,10 +50,15 @@ function getRatePeriods(widget: CreatedWidget, data: ChartRow[]): RatePeriod[] {
         ? row.x.slice(0, 10)
         : getSydneyDateKey(row.x)
       : row.x
-    grouped.set(key, (grouped.get(key) ?? 0) + row.kwh)
+    const meterId = row.series ?? defaultMeterId
+    const compositeKey = `${meterId}\u0000${key}`
+    const current = grouped.get(compositeKey)
+    grouped.set(compositeKey, { meterId, key, kwh: (current?.kwh ?? 0) + row.kwh })
   }
 
-  return [...grouped].sort(([left], [right]) => left.localeCompare(right)).map(([key, kwh]) => {
+  return [...grouped.values()].sort((left, right) =>
+    left.meterId.localeCompare(right.meterId) || left.key.localeCompare(right.key),
+  ).map(({ meterId, key, kwh }) => {
     const label = groupByDay
       ? new Intl.DateTimeFormat(undefined, {
           month: "short",
@@ -60,7 +67,7 @@ function getRatePeriods(widget: CreatedWidget, data: ChartRow[]): RatePeriod[] {
           timeZone: "UTC",
         }).format(new Date(`${key}T00:00:00Z`))
       : formatTableDate(key, widget.dataMode, widget.timePeriod)
-    return { key, kwh, label, x: groupByDay ? label : key }
+    return { key, meterId, kwh, label, x: groupByDay ? label : key }
   })
 }
 
@@ -76,58 +83,63 @@ export function WidgetFullscreen({
   isLoading: boolean
 }) {
   const { closeModal } = useModal()
-  const { updateCreatedWidgetRates, updateCreatedWidgetColor } = useWidgetContext()
+  const { updateCreatedWidgetRates, updateCreatedWidgetColors } = useWidgetContext()
   const [metric, setMetric] = useState<"energy" | "cost">("energy")
-  const [draftRates, setDraftRates] = useState<Record<string, number>>(widget.ratesByPeriod ?? {})
-  const [seriesColor, setSeriesColor] = useState(widget.seriesColor ?? "#217acc")
+  const meterIds = getWidgetMeterIds(widget)
+  const [draftRates, setDraftRates] = useState<Record<string, Record<string, number>>>(() => {
+    if (widget.ratesByMeterPeriod) return widget.ratesByMeterPeriod
+    if (widget.ratesByPeriod && meterIds[0]) return { [meterIds[0]]: widget.ratesByPeriod }
+    return {}
+  })
+  const [draftColors, setDraftColors] = useState<Record<string, string>>(() => {
+    const colors = { ...(widget.colorsByMeter ?? {}) }
+    if (widget.seriesColor && meterIds[0] && !colors[meterIds[0]]) {
+      colors[meterIds[0]] = widget.seriesColor
+    }
+    return colors
+  })
   const [baseRate, setBaseRate] = useState("")
-  const [selectedPeriod, setSelectedPeriod] = useState("")
+  const [selectedMeterId, setSelectedMeterId] = useState(meterIds[0] ?? "")
+  const [selectedPeriodKeys, setSelectedPeriodKeys] = useState<string[]>([])
   const [isSaved, setIsSaved] = useState(false)
   const chartData = data ?? EMPTY_CHART_DATA
+  const chartSeriesNames = [...new Set(chartData.map(({ series }) => series ?? "kwh"))]
+  const getMeterColor = (meterId: string) =>
+    draftColors[meterId] ??
+    CHART_SERIES_COLORS[Math.max(0, chartSeriesNames.indexOf(meterId)) % CHART_SERIES_COLORS.length]
   const ratePeriods = useMemo(() => getRatePeriods(widget, chartData), [widget, chartData])
-  const selectedPeriodKey = ratePeriods.some(({ key }) => key === selectedPeriod)
-    ? selectedPeriod
-    : ratePeriods[0]?.key ?? ""
-  const selectedRate = selectedPeriodKey ? draftRates[selectedPeriodKey] : undefined
+  const meterPeriods = ratePeriods.filter(({ meterId }) => meterId === selectedMeterId)
+  const selectedPeriods = meterPeriods.filter(({ key }) => selectedPeriodKeys.includes(key))
+  const ratesForSelectedMeter = draftRates[selectedMeterId] ?? {}
   const costData = ratePeriods.flatMap((period) => {
-    const rate = draftRates[period.key]
-    return rate === undefined ? [] : [{ x: period.x, kwh: (period.kwh * rate) / 100 }]
+    const rate = draftRates[period.meterId]?.[period.key]
+    return rate === undefined
+      ? []
+      : [{ x: period.x, kwh: (period.kwh * rate) / 100, series: period.meterId }]
   })
   const totalCost = ratePeriods.reduce(
-    (sum, period) => sum + (period.kwh * (draftRates[period.key] ?? 0)) / 100,
+    (sum, period) => sum + (period.kwh * (draftRates[period.meterId]?.[period.key] ?? 0)) / 100,
     0,
   )
-  const missingRateCount = ratePeriods.filter(({ key }) => draftRates[key] === undefined).length
+  const missingRateCount = ratePeriods.filter(
+    ({ meterId, key }) => draftRates[meterId]?.[key] === undefined,
+  ).length
 
-  const updateSelectedRate = (value: string) => {
-    if (!selectedPeriodKey) return
-    setIsSaved(false)
-    setDraftRates((current) => {
-      const next = { ...current }
-      if (value === "") {
-        delete next[selectedPeriodKey]
-      } else {
-        const rate = Number(value)
-        if (Number.isFinite(rate) && rate >= 0) next[selectedPeriodKey] = rate
-      }
-      return next
-    })
-  }
-
-  const applyRateToAll = () => {
+  const applyRateToSelected = () => {
     if (baseRate.trim() === "") return
     const rate = Number(baseRate)
-    if (!Number.isFinite(rate) || rate < 0 || !ratePeriods.length) return
-    setDraftRates((current) => ({
-      ...current,
-      ...Object.fromEntries(ratePeriods.map(({ key }) => [key, rate])),
-    }))
+    if (!Number.isFinite(rate) || rate < 0 || !selectedPeriods.length) return
+    setDraftRates((current) => {
+      const meterRates = { ...(current[selectedMeterId] ?? {}) }
+      for (const period of selectedPeriods) meterRates[period.key] = rate
+      return { ...current, [selectedMeterId]: meterRates }
+    })
     setIsSaved(false)
   }
 
   const saveRates = () => {
     updateCreatedWidgetRates(widget.id, draftRates)
-    updateCreatedWidgetColor(widget.id, seriesColor)
+    updateCreatedWidgetColors(widget.id, draftColors)
     setIsSaved(true)
   }
 
@@ -139,7 +151,7 @@ export function WidgetFullscreen({
         <header className="flex shrink-0 items-center justify-between gap-3 border-b pb-3">
           <div className="min-w-0">
             <h2 className="truncate text-lg font-semibold">{widget.name}</h2>
-            <p className="text-xs text-muted-foreground">{widget.meterId}</p>
+            <p className="text-xs text-muted-foreground">{getWidgetMeterIds(widget).join(", ")}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <div className="flex rounded-md border p-0.5">
@@ -173,7 +185,7 @@ export function WidgetFullscreen({
               widget={widget}
               data={displayData}
               unit={metric === "cost" ? "AUD" : "kWh"}
-              seriesColor={seriesColor}
+              seriesColors={draftColors}
             />
           )}
         </div>
@@ -181,34 +193,93 @@ export function WidgetFullscreen({
 
       <aside className="flex min-h-0 flex-col gap-4 overflow-y-auto border-t pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
         <div>
+          <h3 className="text-sm font-semibold">Meter colors</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Choose a color for each meter series.
+          </p>
+        </div>
+        {meterIds.map((meterId) => (
+          <div key={meterId} className="flex min-w-0 items-center gap-3">
+            <Input
+              type="color"
+              aria-label={`Chart color for ${meterId}`}
+              className="h-9 w-14 shrink-0 cursor-pointer p-1"
+              value={getMeterColor(meterId)}
+              onChange={(event) => {
+                setDraftColors((current) => ({ ...current, [meterId]: event.target.value }))
+                setIsSaved(false)
+              }}
+            />
+            <span className="truncate font-mono text-xs" title={meterId}>{meterId}</span>
+          </div>
+        ))}
+
+        <div className="border-t pt-4">
           <h3 className="text-sm font-semibold">Energy pricing</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Set a rate per kWh for each displayed period. Prices are saved with this widget.
+            Choose a meter and one or more periods, then apply a rate per kWh.
           </p>
         </div>
 
-        {(widget.type === "line" || widget.type === "area") && (
-          <div className="grid gap-2 border-b pb-4">
-            <label htmlFor="series-color" className="text-sm font-medium">Chart color</label>
-            <div className="flex items-center gap-3">
-              <Input
-                id="series-color"
-                type="color"
-                aria-label="Chart color"
-                className="h-9 w-14 cursor-pointer p-1"
-                value={seriesColor}
-                onChange={(event) => {
-                  setSeriesColor(event.target.value)
-                  setIsSaved(false)
-                }}
-              />
-              <span className="font-mono text-sm uppercase">{seriesColor}</span>
+        <div className="grid gap-2 border-b pb-4">
+          <label htmlFor="rate-meter" className="text-sm font-medium">Meter</label>
+          <Select
+            value={selectedMeterId}
+            onValueChange={(value) => {
+              setSelectedMeterId(value ?? "")
+              setSelectedPeriodKeys([])
+            }}
+          >
+            <SelectTrigger id="rate-meter" className="w-full">
+              <SelectValue placeholder="Select a meter" />
+            </SelectTrigger>
+            <SelectContent>
+              {meterIds.map((meterId) => (
+                <SelectItem key={meterId} value={meterId}>{meterId}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Periods</label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setSelectedPeriodKeys(meterPeriods.map(({ key }) => key))}
+              >
+                Select all
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => setSelectedPeriodKeys([])}>
+                Clear
+              </Button>
             </div>
           </div>
-        )}
+          <div className="max-h-36 space-y-1 overflow-y-auto rounded-md border p-2">
+            {meterPeriods.map(({ key, label }) => (
+              <label key={key} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={selectedPeriodKeys.includes(key)}
+                  onChange={(event) => setSelectedPeriodKeys((current) =>
+                    event.target.checked
+                      ? [...current, key]
+                      : current.filter((periodKey) => periodKey !== key),
+                  )}
+                />
+                <span>{label}</span>
+                {ratesForSelectedMeter[key] !== undefined && (
+                  <span className="ml-auto text-xs text-muted-foreground">{ratesForSelectedMeter[key]}¢/kWh</span>
+                )}
+              </label>
+            ))}
+            {meterPeriods.length === 0 && (
+              <p className="text-xs text-muted-foreground">No periods available for this meter.</p>
+            )}
+          </div>
 
-        <div className="grid gap-2 border-b pb-4">
-          <label htmlFor="base-rate" className="text-sm font-medium">Apply one rate to all periods</label>
+          <label htmlFor="base-rate" className="text-sm font-medium">Rate for selected periods</label>
           <div className="flex gap-2">
             <Input
               id="base-rate"
@@ -216,48 +287,27 @@ export function WidgetFullscreen({
               min="0"
               step="0.01"
               inputMode="decimal"
-              placeholder="e.g. 32"
+              placeholder="Cents per kWh"
               value={baseRate}
               onChange={(event) => setBaseRate(event.target.value)}
             />
-            <Button type="button" variant="outline" onClick={applyRateToAll}>Apply</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={applyRateToSelected}
+              disabled={!selectedPeriods.length || !baseRate.trim()}
+            >
+              Apply
+            </Button>
           </div>
-          <p className="text-xs text-muted-foreground">Cents per kWh</p>
-        </div>
-
-        <div className="grid gap-2">
-          <label htmlFor="rate-period" className="text-sm font-medium">Adjust one period</label>
-          <Select
-            items={ratePeriods.map(({ key, label }) => ({ value: key, label }))}
-            value={selectedPeriodKey}
-            onValueChange={(value) => setSelectedPeriod(value ?? "")}
-          >
-            <SelectTrigger id="rate-period" className="w-full">
-              <SelectValue placeholder="Select a period" />
-            </SelectTrigger>
-            <SelectContent>
-              {ratePeriods.map(({ key, label }) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            id="period-rate"
-            type="number"
-            min="0"
-            step="0.01"
-            inputMode="decimal"
-            aria-label="Cents per kWh for selected period"
-            placeholder="Cents per kWh"
-            value={selectedRate ?? ""}
-            onChange={(event) => updateSelectedRate(event.target.value)}
-            disabled={!selectedPeriodKey}
-          />
+          <p className="text-xs text-muted-foreground">
+            {selectedPeriods.length} period{selectedPeriods.length === 1 ? "" : "s"} selected.
+          </p>
         </div>
 
         <div className="mt-auto border-t pt-4">
           <p className="text-xs text-muted-foreground">
-            {missingRateCount > 0 ? `${missingRateCount} periods still need a rate` : "All periods have a rate"}
+            {missingRateCount > 0 ? `${missingRateCount} meter-periods still need a rate` : "All meter-periods have a rate"}
           </p>
           <p className="mt-1 text-lg font-semibold">
             {missingRateCount > 0 ? "Priced subtotal" : "Estimated total"}: {currencyFormatter.format(totalCost)}

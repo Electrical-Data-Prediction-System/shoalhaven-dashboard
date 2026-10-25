@@ -10,21 +10,21 @@ export function WidgetVisualization({
   widget,
   data,
   unit = "kWh",
-  seriesColor,
+  seriesColors,
 }: {
   widget: CreatedWidget
   data: ChartRow[]
   unit?: string
-  seriesColor?: string
+  seriesColors?: Record<string, string>
 }) {
   if (widget.type === "line") {
-    return <LineGraph data={data} unit={unit} color={seriesColor} dataMode={widget.dataMode} timePeriod={widget.timePeriod} />
+    return <LineGraph data={data} unit={unit} seriesColors={seriesColors} dataMode={widget.dataMode} timePeriod={widget.timePeriod} />
   }
   if (widget.type === "area") {
-    return <AreaGraph data={data} unit={unit} color={seriesColor} dataMode={widget.dataMode} timePeriod={widget.timePeriod} />
+    return <AreaGraph data={data} unit={unit} seriesColors={seriesColors} dataMode={widget.dataMode} timePeriod={widget.timePeriod} />
   }
   if (widget.type === "bar") {
-    return <BarGraph data={data} unit={unit} dataMode={widget.dataMode} timePeriod={widget.timePeriod} />
+    return <BarGraph data={data} unit={unit} seriesColors={seriesColors} dataMode={widget.dataMode} timePeriod={widget.timePeriod} />
   }
   if (widget.type === "pie") {
     return <PieGraph data={data} unit={unit} dataMode={widget.dataMode} timePeriod={widget.timePeriod} />

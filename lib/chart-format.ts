@@ -7,14 +7,19 @@ export function formatChartValue(value: number, unit: string) {
   return value.toLocaleString()
 }
 
-function parseChartDate(value: string, dataMode: WidgetFormConfig["dataMode"]) {
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?/)
-  if (!match) return null
+function parseChartDate(value: string) {
+  const normalizedValue = value.trim().replace(" ", "T")
+  if (!/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?$/.test(normalizedValue)
+    && !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalizedValue)) {
+    return null
+  }
 
-  const [, year, month, day, hour = "0", minute = "0", second = "0"] = match
-  return dataMode === "aggregate"
-    ? new Date(/(?:Z|[+-]\d{2}:?\d{2})$/.test(value) ? value : `${value}Z`)
-    : new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second)))
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalizedValue)
+  const normalizedPrecision = normalizedValue.replace(/\.(\d+)(?=(?:Z|[+-]\d{2}:?\d{2})?$)/, (_, fraction: string) =>
+    `.${fraction.slice(0, 3)}`,
+  )
+  const date = new Date(hasTimezone ? normalizedPrecision : `${normalizedPrecision}Z`)
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 export function formatTableDate(
@@ -22,7 +27,7 @@ export function formatTableDate(
   dataMode: WidgetFormConfig["dataMode"],
   timePeriod: WidgetFormConfig["timePeriod"],
 ) {
-  const date = parseChartDate(value, dataMode)
+  const date = parseChartDate(value)
   if (!date) return value
 
   const aggregateOptions: Record<WidgetFormConfig["timePeriod"], Intl.DateTimeFormatOptions> = {
@@ -46,7 +51,7 @@ export function formatChartDate(
   dataMode: WidgetFormConfig["dataMode"],
   timePeriod: WidgetFormConfig["timePeriod"],
 ) {
-  const date = parseChartDate(value, dataMode)
+  const date = parseChartDate(value)
   if (!date) return value
 
   const aggregateOptions: Record<WidgetFormConfig["timePeriod"], Intl.DateTimeFormatOptions> = {
@@ -57,8 +62,8 @@ export function formatChartDate(
     year: { year: "numeric" },
   }
   const rawOptions: Record<WidgetFormConfig["timePeriod"], Intl.DateTimeFormatOptions> = {
-    "5m": { hour: "numeric", minute: "2-digit" },
-    day: { weekday: "short", hour: "numeric" },
+    "5m": { hour: "2-digit", minute: "2-digit", hourCycle: "h23" },
+    day: { hour: "2-digit", minute: "2-digit", hourCycle: "h23" },
     week: { weekday: "short", hour: "numeric" },
     month: { month: "short", day: "numeric" },
     year: { month: "short", year: "2-digit" },

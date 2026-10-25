@@ -63,6 +63,8 @@ export function DataTable({
       .map((row, index) => ({ ...row, index }))
       .sort((a, b) => sign * (sort.key === "time" ? a.index - b.index : a.kwh - b.kwh))
   }, [data, sort])
+  const seriesNames = [...new Set(data.map(({ series }) => series).filter((name): name is string => Boolean(name)))]
+  const showSeries = seriesNames.length > 1
 
   const total = useMemo(() => data.reduce((sum, row) => sum + row.kwh, 0), [data])
 
@@ -84,6 +86,7 @@ export function DataTable({
             <TableHead aria-sort={ariaSort("time")}>
               <SortButton label="Time" column="time" sort={sort} onSort={onSort} />
             </TableHead>
+            {showSeries && <TableHead>Meter / series</TableHead>}
             <TableHead aria-sort={ariaSort("value")} className="text-right">
               <SortButton label={valueLabel} column="value" sort={sort} onSort={onSort} className="justify-end" />
             </TableHead>
@@ -93,13 +96,14 @@ export function DataTable({
           {rows.map((row) => (
             <TableRow key={`${row.x}-${row.index}`}>
               <TableCell>{formatTableDate(row.x, dataMode, timePeriod)}</TableCell>
+              {showSeries && <TableCell>{row.series}</TableCell>}
               <TableCell className="text-right tabular-nums">{formatChartValue(row.kwh, unit)}</TableCell>
             </TableRow>
           ))}
         </TableBody>
         <TableFooter className="sticky bottom-0 bg-muted">
           <TableRow className="hover:bg-transparent">
-            <TableCell>Total ({rows.length} rows)</TableCell>
+            <TableCell colSpan={showSeries ? 2 : 1}>Total ({rows.length} rows)</TableCell>
             <TableCell className="text-right tabular-nums">{formatChartValue(total, unit)}</TableCell>
           </TableRow>
         </TableFooter>

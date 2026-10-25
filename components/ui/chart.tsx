@@ -290,7 +290,7 @@ function ChartLegendContent({
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-4",
+        "flex flex-wrap items-center justify-center gap-x-4 gap-y-2 overflow-hidden px-2",
         verticalAlign === "top" ? "pb-3" : "pt-3",
         className
       )}
@@ -305,7 +305,7 @@ function ChartLegendContent({
             <div
               key={index}
               className={cn(
-                "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
+                "flex min-w-0 max-w-[min(12rem,35vw)] items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
               )}
             >
               {itemConfig?.icon && !hideIcon ? (
@@ -318,7 +318,9 @@ function ChartLegendContent({
                   }}
                 />
               )}
-              {itemConfig?.label}
+              <span className="truncate" title={String(itemConfig?.label ?? "")}>
+                {itemConfig?.label}
+              </span>
             </div>
           )
         })}

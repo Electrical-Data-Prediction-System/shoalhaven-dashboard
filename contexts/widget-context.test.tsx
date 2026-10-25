@@ -7,7 +7,7 @@ const config: WidgetFormConfig = {
   type: "line",
   dataMode: "aggregate",
   timePeriod: "month",
-  meterId: "meter-1",
+  meterIds: ["meter-1"],
 }
 const CREATED_WIDGETS_STORAGE_KEY = "demo-dashboard.createdWidgets"
 
@@ -52,7 +52,7 @@ describe("WidgetProvider", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create widget" }))
     expect(screen.getByText("Energy use")).toBeTruthy()
     expect(JSON.parse(localStorage.getItem(CREATED_WIDGETS_STORAGE_KEY) ?? "[]")).toMatchObject([
-      { id: "widget-1", name: "Energy use", meterId: "meter-1" },
+      { id: "widget-1", name: "Energy use", meterIds: ["meter-1"] },
     ])
 
     fireEvent.click(screen.getByRole("button", { name: "Update widget" }))

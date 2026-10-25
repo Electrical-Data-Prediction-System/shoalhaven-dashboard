@@ -7,28 +7,35 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
-import type { ChartRow } from "@/lib/chart-data"
+import { CHART_SERIES_COLORS, toMultiSeriesChartData, type ChartRow } from "@/lib/chart-data"
 import { formatChartDate, formatChartValue } from "@/lib/chart-format"
 import type { WidgetFormConfig } from "@/contexts/widget-context"
 
 export function BarGraph({
   data,
   unit = "kWh",
+  seriesColors = {},
   dataMode,
   timePeriod,
 }: {
   data: ChartRow[]
   unit?: string
+  seriesColors?: Record<string, string>
   dataMode?: WidgetFormConfig["dataMode"]
   timePeriod?: WidgetFormConfig["timePeriod"]
 }) {
-  const chartConfig = {
-    kwh: { label: unit === "AUD" ? "Estimated cost" : "KWH", color: "var(--color-brand-warning-500)" },
-  } satisfies ChartConfig
+  const { data: chartData, series } = toMultiSeriesChartData(data)
+  const chartConfig: ChartConfig = Object.fromEntries(series.map(({ key, name }, index) => [
+    key,
+    {
+      label: name === "kwh" ? (unit === "AUD" ? "Estimated cost" : "KWH") : name,
+      color: seriesColors[name] ?? CHART_SERIES_COLORS[index % CHART_SERIES_COLORS.length],
+    },
+  ]))
 
   return (
     <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
-      <BarChart data={data} accessibilityLayer margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
+      <BarChart data={chartData} accessibilityLayer margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="x"
@@ -55,12 +62,20 @@ export function BarGraph({
               }
               formatter={(value) => unit === "AUD"
                 ? [formatChartValue(Number(value), unit), ""]
-                : [formatChartValue(Number(value), unit ?? "kWh"), unit ?? "kWh"]}
+                : [formatChartValue(Number(value), unit ?? " kWh"), unit ?? " kWh"]}
             />
           }
         />
         <ChartLegend content={<ChartLegendContent />} />
-        <Bar dataKey="kwh" fill="var(--color-kwh)" radius={4} />
+        {series.map(({ key, name }, index) => (
+          <Bar
+            key={key}
+            dataKey={key}
+            name={name}
+            fill={seriesColors[name] ?? CHART_SERIES_COLORS[index % CHART_SERIES_COLORS.length]}
+            radius={4}
+          />
+        ))}
       </BarChart>
     </ChartContainer>
   )

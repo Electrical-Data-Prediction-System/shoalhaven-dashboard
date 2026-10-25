@@ -14,16 +14,35 @@ import { Button } from "@/components/ui/button";
 import { useWidgetContext, type CreatedWidget, type WidgetFormConfig } from "@/contexts/widget-context";
 import { useModal } from "./modal";
 import { GetMeter, SearchMetersByLocation, type MeterSearchResult } from "@/lib/api";
+import { getWidgetMeterIds } from "@/lib/widget-data";
+
+function mergeMeters(...groups: MeterSearchResult[][]): MeterSearchResult[] {
+  const metersById = new Map<string, MeterSearchResult>()
+  for (const group of groups) {
+    for (const meter of group) metersById.set(meter._id, meter)
+  }
+  return [...metersById.values()]
+}
 
 export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedWidget }) {
   const { closeModal } = useModal();
   const { onCreateWidget, updateCreatedWidget } = useWidgetContext();
   const [dataMode, setDataMode] = useState<WidgetFormConfig["dataMode"]>(initialWidget?.dataMode ?? "aggregate");
-  const [timePeriod, setTimePeriod] = useState<WidgetFormConfig["timePeriod"]>(initialWidget?.timePeriod ?? "month");
+  const [timePeriod, setTimePeriod] = useState<WidgetFormConfig["timePeriod"]>(
+    initialWidget?.dataMode === "readings" ? "day" : initialWidget?.timePeriod ?? "month",
+  );
+  const [selectedMeterIds, setSelectedMeterIds] = useState<string[]>(() =>
+    initialWidget ? getWidgetMeterIds(initialWidget) : [],
+  )
   const [locationQuery, setLocationQuery] = useState("");
-  const [meters, setMeters] = useState<MeterSearchResult[]>([]);
+  const [searchMeters, setSearchMeters] = useState<MeterSearchResult[]>([]);
+  const [selectedMeters, setSelectedMeters] = useState<MeterSearchResult[]>(() =>
+    initialWidget?.meterDetails ?? [],
+  );
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [meterSelectionError, setMeterSelectionError] = useState<string | null>(null);
+  const meters = mergeMeters(selectedMeters, searchMeters);
   const selectedTimePeriod = dataMode === "aggregate"
     ? (timePeriod === "day" ? "month" : timePeriod)
     : (timePeriod === "5m" ? "day" : timePeriod)
@@ -32,11 +51,12 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
     if (!initialWidget) return
 
     let cancelled = false
-    GetMeter(initialWidget.meterId)
-      .then(({ meterObject }) => {
+    Promise.all(getWidgetMeterIds(initialWidget).map((meterId) => GetMeter(meterId)))
+      .then((results) => {
         if (cancelled) return
-        setMeters([meterObject])
-        setLocationQuery(meterObject.location.fullAddress)
+        const selectedMeters = results.map(({ meterObject }) => meterObject)
+        setSelectedMeters((current) => mergeMeters(current, selectedMeters))
+        setLocationQuery(selectedMeters[0]?.location.fullAddress ?? "")
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -59,7 +79,9 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
       setSearchError(null);
       SearchMetersByLocation(location)
         .then((results) => {
-          if (!cancelled) setMeters(results);
+          if (!cancelled) {
+            setSearchMeters(results)
+          }
         })
         .catch((error: unknown) => {
           if (!cancelled) {
@@ -79,14 +101,20 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    
     const formData = new FormData(event.currentTarget);
     const name = String(formData.get("name") ?? "").trim();
     const type = formData.get("type");
     const dataMode = formData.get("dataMode");
     const timePeriod = formData.get("timePeriod");
-    const meterId = formData.get("meterId");
 
-    if (!name || typeof type !== "string" || typeof dataMode !== "string" || typeof timePeriod !== "string" || typeof meterId !== "string") {
+    if (!selectedMeterIds.length) {
+      setMeterSelectionError("Select at least one meter.")
+      return
+    }
+    setMeterSelectionError(null)
+
+    if (!name || typeof type !== "string" || typeof dataMode !== "string" || typeof timePeriod !== "string") {
       return;
     }
 
@@ -95,7 +123,8 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
       type: type as WidgetFormConfig["type"],
       dataMode: dataMode as WidgetFormConfig["dataMode"],
       timePeriod: timePeriod as WidgetFormConfig["timePeriod"],
-      meterId,
+      meterIds: selectedMeterIds,
+      meterDetails: meters.filter((meter) => selectedMeterIds.includes(meter._id)),
     };
 
     if (initialWidget) {
@@ -151,7 +180,11 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
             <Select
               name="dataMode"
               defaultValue={initialWidget?.dataMode ?? "aggregate"}
-              onValueChange={(value) => setDataMode(value as WidgetFormConfig["dataMode"])}
+              onValueChange={(value) => {
+                const nextDataMode = value as WidgetFormConfig["dataMode"]
+                setDataMode(nextDataMode)
+                if (nextDataMode === "readings") setTimePeriod("day")
+              }}
               required
             >
               <SelectTrigger id="dataMode" className="h-10 w-full bg-background">
@@ -174,7 +207,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
               const value = event.target.value
               setLocationQuery(value)
               if (value.trim().length < 2) {
-                setMeters([])
+                setSearchMeters([])
                 setIsSearching(false)
                 setSearchError(null)
               }
@@ -185,18 +218,36 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
           />
           {isSearching && <p className="text-xs text-muted-foreground">Searching meters...</p>}
           {searchError && <p className="text-xs text-destructive">{searchError}</p>}
-          {!isSearching && !searchError && locationQuery.trim().length >= 2 && meters.length === 0 && (
+          {!isSearching && !searchError && locationQuery.trim().length >= 2 && searchMeters.length === 0 && (
             <p className="text-xs text-muted-foreground">No meters found.</p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="meterId" className="text-sm font-medium">Meter</label>
-          <Select name="meterId" defaultValue={initialWidget?.meterId} required>
-            <SelectTrigger id="meterId" className="h-10 w-full bg-background">
-              <SelectValue placeholder={meters.length ? "Select a meter" : "Search for a location first"} />
+          <label htmlFor="meterIds" className="text-sm font-medium">Meters</label>
+          <Select
+            multiple
+            value={selectedMeterIds}
+            onValueChange={(value) => {
+              setSelectedMeterIds(value)
+              setSelectedMeters((current) => mergeMeters(
+                current,
+                meters.filter((meter) => value.includes(meter._id)),
+              ).filter((meter) => value.includes(meter._id)))
+              setMeterSelectionError(null)
+            }}
+          >
+            <SelectTrigger id="meterIds" className="h-10 w-full bg-background">
+              <SelectValue placeholder={meters.length ? "Select one or more meters" : "Search for a location first"} />
             </SelectTrigger>
             <SelectContent className="w-full">
+              {selectedMeterIds
+                .filter((meterId) => !meters.some((meter) => meter._id === meterId))
+                .map((meterId) => (
+                  <SelectItem key={meterId} value={meterId}>
+                    Meter ({meterId})
+                  </SelectItem>
+                ))}
               {meters.map((meter) => (
                 <SelectItem key={meter._id} value={meter._id}>
                   {meter.location.fullAddress} ({meter._id})
@@ -204,6 +255,15 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
               ))}
             </SelectContent>
           </Select>
+          {selectedMeterIds.map((meterId) => (
+            <input key={meterId} type="hidden" name="meterIds" value={meterId} />
+          ))}
+          {selectedMeterIds.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {selectedMeterIds.length} meter{selectedMeterIds.length === 1 ? "" : "s"} selected
+            </p>
+          )}
+          {meterSelectionError && <p className="text-xs text-destructive">{meterSelectionError}</p>}
         </div>
 
         <div className="space-y-1.5">
@@ -229,12 +289,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
                   <SelectItem value="year">Every year</SelectItem>
                 </>
               ) : (
-                <>
-                  <SelectItem value="day">Last day</SelectItem>
-                  <SelectItem value="week">Last week</SelectItem>
-                  <SelectItem value="month">Last month</SelectItem>
-                  <SelectItem value="year">Last year</SelectItem>
-                </>
+                <SelectItem value="day">Last day</SelectItem>
               )}
             </SelectContent>
           </Select>

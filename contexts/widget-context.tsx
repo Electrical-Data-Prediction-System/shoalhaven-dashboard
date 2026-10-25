@@ -4,6 +4,7 @@ import { createContext, ReactNode, useContext, useRef, useState } from "react"
 import { useLocalStorage } from "@/hooks/useLocalStorage"
 import type { PlacedWidget } from "@/components/widget/types"
 import type { WidgetType } from "@/components/widget/widgets"
+import type { MeterSearchResult } from "@/lib/api"
 
 export const DEFAULT_PLACED: PlacedWidget<WidgetType>[] = [
     { id: "energy-consumption", type: "energy-consumption", layout: { x: 0, y: 0, w: 3, h: 2 } },
@@ -22,15 +23,21 @@ export type WidgetFormConfig = {
     type: "line" | "area" | "bar" | "pie" | "datatable"
     dataMode: "aggregate" | "readings"
     timePeriod: "5m" | "day" | "week" | "month" | "year"
-    meterId: string
+    meterIds: string[]
+    meterDetails?: MeterSearchResult[]
 }
 
 export type CreatedWidgetLayout = { x: number; y: number; w: number; h: number }
-export type CreatedWidget = WidgetFormConfig & {
+export type CreatedWidget = Omit<WidgetFormConfig, "meterIds"> & {
     id: string
+    meterIds?: string[]
+    /** Legacy field retained so previously saved widgets keep loading. */
+    meterId?: string
     layout?: CreatedWidgetLayout
     ratesByPeriod?: Record<string, number>
     seriesColor?: string
+    ratesByMeterPeriod?: Record<string, Record<string, number>>
+    colorsByMeter?: Record<string, string>
 }
 
 type GridPosition = { i: string; x: number; y: number; w: number; h: number }
@@ -41,8 +48,8 @@ type WidgetContextValue = {
     createdWidgets: CreatedWidget[]
     onCreateWidget: (config: WidgetFormConfig) => CreatedWidget
     updateCreatedWidget: (id: string, config: WidgetFormConfig) => void
-    updateCreatedWidgetRates: (id: string, rates: Record<string, number>) => void
-    updateCreatedWidgetColor: (id: string, color: string) => void
+    updateCreatedWidgetRates: (id: string, rates: Record<string, Record<string, number>>) => void
+    updateCreatedWidgetColors: (id: string, colors: Record<string, string>) => void
     deleteCreatedWidget: (id: string) => void
     updateCreatedWidgetLayouts: (items: readonly GridPosition[]) => void
 
@@ -87,15 +94,15 @@ export function WidgetProvider({ children }: { children : ReactNode})
         ))
     }
 
-    const updateCreatedWidgetRates = (id: string, rates: Record<string, number>) => {
+    const updateCreatedWidgetRates = (id: string, rates: Record<string, Record<string, number>>) => {
         setCreatedWidgets(createdWidgets.map((widget) =>
-            widget.id === id ? { ...widget, ratesByPeriod: rates } : widget
+            widget.id === id ? { ...widget, ratesByMeterPeriod: rates } : widget
         ))
     }
 
-    const updateCreatedWidgetColor = (id: string, color: string) => {
+    const updateCreatedWidgetColors = (id: string, colors: Record<string, string>) => {
         setCreatedWidgets(createdWidgets.map((widget) =>
-            widget.id === id ? { ...widget, seriesColor: color } : widget
+            widget.id === id ? { ...widget, colorsByMeter: colors } : widget
         ))
     }
 
@@ -125,7 +132,7 @@ export function WidgetProvider({ children }: { children : ReactNode})
             onCreateWidget,
             updateCreatedWidget,
             updateCreatedWidgetRates,
-            updateCreatedWidgetColor,
+            updateCreatedWidgetColors,
             deleteCreatedWidget,
             updateCreatedWidgetLayouts,
 
