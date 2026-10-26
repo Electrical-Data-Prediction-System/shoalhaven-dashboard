@@ -83,6 +83,8 @@ export function DashboardGrid() {
           cols={{ lg: 12, md: 8, sm: 4 }}
           rowHeight={80}
           margin={[16, 16]}
+          // Dragging inside a map pans the map instead of moving the widget
+          dragConfig={{ cancel: ".leaflet-container" }}
           onDragStop={(layout) => {
             containerRef.current?.classList.remove("select-none")
             persistLayout(layout)

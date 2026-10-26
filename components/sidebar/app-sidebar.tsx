@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LogOut, Settings, Dam, Zap, Droplet, Plus } from "lucide-react"
+import { LogOut, Settings, Dam, Zap, Droplet, Plus, ChartLine, SunMedium, MapIcon } from "lucide-react"
 
 import { SidebarMain } from "./sidebar-main"
 import { useModal } from "../forms/modal"
+import AddMarketWidget from "../forms/add-market-widget"
 import { WIDGETS } from "@/features/dashboard/widgets/widgets"
 import { useWidgetContext } from "@/features/dashboard/context/widget-context"
 import WidgetForm from "@/features/dashboard/editor/create-widget"
@@ -70,17 +71,31 @@ export function AppSidebar() {
   const { openModal, closeModal, isOpen } = useModal();
 
 
-  const { placed, createdWidgets } = useWidgetContext();
+  const { placed, createdWidgets, addPlacedWidget, highlight } = useWidgetContext();
+
+  const addMeterMap = () => {
+    const id = addPlacedWidget("meter-map", WIDGETS["meter-map"].defaultSize)
+    // Wait a frame so the map is on the grid before scrolling to it
+    requestAnimationFrame(() => highlight(id))
+  }
+
+  const isMarket = (type: keyof typeof WIDGETS) => {
+    const def = WIDGETS[type]
+    return "category" in def && def.category === "market"
+  }
+  const placedItems = placed
+    .filter((p) => p.type in WIDGETS)
+    .map((p) => ({ title: p.title ?? WIDGETS[p.type].title, url: "#", widgetId: p.id, market: isMarket(p.type) }))
 
   const powerItems = [
-    ...placed
-      .filter((p) => p.type in WIDGETS)
-      .map((p) => ({ title: p.title ?? WIDGETS[p.type].title, url: "#", widgetId: p.id})),
+    ...placedItems.filter((item) => !item.market),
     ...createdWidgets.map((w) => ({ title: w.name, url: "#", widgetId: w.id}))
   ]
+  const marketItems = placedItems.filter((item) => item.market)
 
   const navMain = [
     { title: "Power", url: "#", icon: Zap, isActive: true, items: powerItems},
+    ...(marketItems.length ? [{ title: "Energy market", url: "#", icon: SunMedium, isActive: true, items: marketItems }] : []),
     ...otherSections
   ]
 
@@ -103,6 +118,20 @@ export function AppSidebar() {
               <SidebarMenuButton className="cursor-pointer" onClick={() => openModal(<WidgetForm />)}>
                 <Plus />
                 <span>Create Chart</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton className="cursor-pointer" onClick={addMeterMap}>
+                <MapIcon />
+                <span>Add meter map</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton className="cursor-pointer" onClick={() => openModal(<AddMarketWidget />)}>
+                <ChartLine />
+                <span>Add market widget</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
 

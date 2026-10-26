@@ -25,6 +25,8 @@ export type WidgetFormConfig = {
     timePeriod: "5m" | "day" | "latest" | "week" | "month" | "year"
     meterIds: string[]
     meterDetails?: MeterSearchResult[]
+    /** Overlay the saved forecast; only offered when the chart has a single meter */
+    showForecast?: boolean
 }
 
 export type CreatedWidgetLayout = { x: number; y: number; w: number; h: number }
@@ -55,6 +57,8 @@ type WidgetContextValue = {
 
     placed: PlacedWidget<WidgetType>[]
     setPlaced: (value: PlacedWidget<WidgetType>[]) => void
+    addPlacedWidget: (type: WidgetType, size: { w: number; h: number }) => string
+    updatePlacedOptions: (id: string, options: Record<string, string>) => void
 
 }
 
@@ -106,6 +110,20 @@ export function WidgetProvider({ children }: { children : ReactNode})
         ))
     }
 
+    const addPlacedWidget = (type: WidgetType, size: { w: number; h: number }) => {
+        // Unique id so the same built-in can be added more than once, e.g. a summer and a winter copy
+        const id = `${type}-${crypto.randomUUID().slice(0, 8)}`
+        // A large y drops it at the bottom; the grid compacts it upwards
+        setPlaced([...placed, { id, type, layout: { x: 0, y: 1000, ...size } }])
+        return id
+    }
+
+    const updatePlacedOptions = (id: string, options: Record<string, string>) => {
+        setPlaced(placed.map((widget) =>
+            widget.id === id ? { ...widget, options: { ...widget.options, ...options } } : widget
+        ))
+    }
+
     const deleteCreatedWidget = (id: string) => {
         setCreatedWidgets(createdWidgets.filter((widget) => widget.id !== id))
     }
@@ -138,6 +156,8 @@ export function WidgetProvider({ children }: { children : ReactNode})
 
             placed,
             setPlaced,
+            addPlacedWidget,
+            updatePlacedOptions,
         }}>
             {children}
         </WidgetContext.Provider>

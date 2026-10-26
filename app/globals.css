@@ -62,7 +62,7 @@
 }
 
 :root {
-  --background: oklch(0.95 0.02 240);
+  --background: #faf9f6; /* warm off-white, matching OpenElectricity */
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -98,7 +98,6 @@
   --gradient-primary: linear-gradient(180deg, #0057A3 0%, #5AA0E2 100%);
   --gradient-dark: linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%);
   --primary: #003566;            
-  --background: oklch(0.97 0.01 240); /* backdrop */
   --sidebar-primary: #217acc;
   --sidebar-primary-foreground: #ffffff;
 

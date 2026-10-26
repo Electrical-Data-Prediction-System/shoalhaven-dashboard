@@ -13,8 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useWidgetContext, type CreatedWidget, type WidgetFormConfig } from "@/features/dashboard/context/widget-context";
 import { useModal } from "@/components/forms/modal";
-import { SearchMetersByLocation, type MeterSearchResult } from "@/lib/api";
-import { getWidgetMeterIds } from "@/features/dashboard/lib/widget-data";
+import { GetMeter, SearchMetersByLocation, type MeterSearchResult } from "@/lib/api";
+import { forecastGranularity, getWidgetMeterIds } from "@/features/dashboard/lib/widget-data";
 
 function mergeMeters(...groups: MeterSearchResult[][]): MeterSearchResult[] {
   const metersById = new Map<string, MeterSearchResult>()
@@ -24,9 +24,18 @@ function mergeMeters(...groups: MeterSearchResult[][]): MeterSearchResult[] {
   return [...metersById.values()]
 }
 
-export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedWidget }) {
+export default function WidgetForm({
+  initialWidget,
+  initialMeterId,
+}: {
+  initialWidget?: CreatedWidget
+  /** Pre-selects a meter for a new chart, e.g. when a meter is clicked on the map */
+  initialMeterId?: string
+}) {
   const { closeModal } = useModal();
   const { onCreateWidget, updateCreatedWidget } = useWidgetContext();
+  const [chartType, setChartType] = useState<WidgetFormConfig["type"] | undefined>(initialWidget?.type);
+  const [showForecast, setShowForecast] = useState(initialWidget?.showForecast ?? false);
   const [dataMode, setDataMode] = useState<WidgetFormConfig["dataMode"]>(initialWidget?.dataMode ?? "aggregate");
   const [timePeriod, setTimePeriod] = useState<WidgetFormConfig["timePeriod"]>(
     initialWidget?.dataMode === "readings"
@@ -34,7 +43,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
       : initialWidget?.timePeriod ?? "month",
   );
   const [selectedMeterIds, setSelectedMeterIds] = useState<string[]>(() =>
-    initialWidget ? getWidgetMeterIds(initialWidget) : [],
+    initialWidget ? getWidgetMeterIds(initialWidget) : initialMeterId ? [initialMeterId] : [],
   )
   const [locationQuery, setLocationQuery] = useState("");
   const [searchMeters, setSearchMeters] = useState<MeterSearchResult[]>([]);
@@ -46,8 +55,35 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
   const [meterSelectionError, setMeterSelectionError] = useState<string | null>(null);
   const meters = mergeMeters(selectedMeters, searchMeters);
   const selectedTimePeriod = dataMode === "aggregate"
-    ? (timePeriod === "day" || timePeriod === "latest" ? "month" : timePeriod)
+    ? (timePeriod === "latest" ? "month" : timePeriod)
     : (timePeriod === "5m" ? "day" : timePeriod)
+  // Forecasts are per meter, so they're only offered for single-meter line and area charts
+  const forecastAvailable = chartType !== undefined && forecastGranularity({
+    type: chartType,
+    dataMode,
+    timePeriod: selectedTimePeriod,
+    meterIds: selectedMeterIds,
+  }) !== null
+
+  // A meter clicked on the map: load its details so it shows by address, not just its id
+  useEffect(() => {
+    if (!initialMeterId || initialWidget) return
+
+    let cancelled = false
+    GetMeter(initialMeterId)
+      .then(({ meterObject }) => {
+        if (cancelled) return
+        setSelectedMeters([meterObject])
+        setLocationQuery(meterObject.location.fullAddress)
+      })
+      .catch(() => {
+        // The id alone still works; the meter list just shows "Meter (id)"
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [initialMeterId, initialWidget])
 
   useEffect(() => {
     const location = locationQuery.trim();
@@ -105,6 +141,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
       timePeriod: timePeriod as WidgetFormConfig["timePeriod"],
       meterIds: selectedMeterIds,
       meterDetails: meters.filter((meter) => selectedMeterIds.includes(meter._id)),
+      showForecast: forecastAvailable && showForecast,
     };
 
     if (initialWidget) {
@@ -141,7 +178,12 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label htmlFor="type" className="text-sm font-medium">Chart type</label>
-            <Select name="type" defaultValue={initialWidget?.type} required>
+            <Select
+              name="type"
+              defaultValue={initialWidget?.type}
+              onValueChange={(value) => setChartType(value as WidgetFormConfig["type"])}
+              required
+            >
               <SelectTrigger id="type" className="h-10 w-full bg-background capitalize">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
@@ -264,6 +306,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
               {dataMode === "aggregate" ? (
                 <>
                   <SelectItem value="5m">Every 5 minutes</SelectItem>
+                  <SelectItem value="day">Every day</SelectItem>
                   <SelectItem value="week">Every week</SelectItem>
                   <SelectItem value="month">Every month</SelectItem>
                   <SelectItem value="year">Every year</SelectItem>
@@ -276,6 +319,27 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
               )}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              name="showForecast"
+              checked={forecastAvailable && showForecast}
+              disabled={!forecastAvailable}
+              onChange={(event) => setShowForecast(event.target.checked)}
+              className="size-4 cursor-pointer accent-primary disabled:cursor-not-allowed"
+            />
+            Show forecast
+          </label>
+          <p className="text-xs text-muted-foreground">
+            {forecastAvailable
+              ? dataMode === "readings"
+                ? "Adds the next 7 days of hourly predicted usage."
+                : "Adds the next 30 days of daily predicted usage."
+              : "Available for line and area charts with one meter, showing raw readings or daily buckets."}
+          </p>
         </div>
 
         <div className="flex justify-end gap-2 border-t border-border pt-4">

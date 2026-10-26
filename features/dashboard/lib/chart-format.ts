@@ -77,3 +77,24 @@ export function formatChartDate(
     timeZone: dataMode === "aggregate" ? "Australia/Sydney" : "UTC",
   }).format(date)
 }
+
+const SERIES_PREFIX: Record<string, string> = { forecast: "Forecast ", band: "Likely range " }
+
+/** Tooltip text for a series value. The forecast band arrives as a [p10, p90] pair */
+export function formatSeriesValue(value: unknown, name: unknown, unit = "kWh") {
+  const text = Array.isArray(value)
+    ? `${formatChartValue(Number(value[0]), unit)} – ${formatChartValue(Number(value[1]), unit)}`
+    : formatChartValue(Number(value), unit)
+
+  return [`${SERIES_PREFIX[String(name)] ?? ""}${text}`, unit === "AUD" ? "" : unit]
+}
+
+/** Opposite hue with the same lightness and saturation, e.g. #217acc -> #cc7321 */
+export function complementColor(color: string) {
+  const match = color.match(/^#([0-9a-f]{6})$/i)
+  if (!match) return "var(--color-brand-warning-500)"
+
+  const channels = [0, 2, 4].map((i) => parseInt(match[1].slice(i, i + 2), 16))
+  const sum = Math.max(...channels) + Math.min(...channels)
+  return `#${channels.map((c) => (sum - c).toString(16).padStart(2, "0")).join("")}`
+}

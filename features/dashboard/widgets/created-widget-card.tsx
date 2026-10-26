@@ -1,7 +1,7 @@
 "use client"
 
 import { useApiData } from "@/hooks/use-ApiData"
-import { loadCachedWidgetData, loadWidgetData } from "@/features/dashboard/lib/widget-data"
+import { loadCachedWidgetData, loadWidgetForecast } from "@/features/dashboard/lib/widget-data"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Maximize2, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,7 @@ import { useWidgetContext, type CreatedWidget } from "@/features/dashboard/conte
 import WidgetForm from "@/features/dashboard/editor/create-widget"
 import { useModal } from "@/components/forms/modal"
 import type { ChartRow } from "@/lib/chart-data"
+import type { ApiForecast } from "@/lib/api"
 import { WidgetVisualization } from "./widget-visualization"
 import { WidgetFullscreen } from "./widget-fullscreen"
 import { getWidgetMeterIds } from "@/features/dashboard/lib/widget-data"
@@ -18,9 +19,10 @@ interface WidgetBodyProps {
   data?: ChartRow[],
   error?: Error,
   isLoading: boolean
+  forecast?: ApiForecast | null
 }
 
-function WidgetBody({ widget, data, error, isLoading }: WidgetBodyProps) {
+function WidgetBody({ widget, data, error, isLoading, forecast }: WidgetBodyProps) {
   if (isLoading) return <Skeleton className="h-full w-full" />
   if (error) return <p className=" break-words p-2 text-sm text-destructive" title={error.message}>Failed to load: {error.message}</p>
   if (!data?.length) {
@@ -31,7 +33,7 @@ function WidgetBody({ widget, data, error, isLoading }: WidgetBodyProps) {
     )
   }
   const seriesColors = widget.colorsByMeter ?? {}
-  return <WidgetVisualization widget={widget} data={data} seriesColors={seriesColors} />
+  return <WidgetVisualization widget={widget} data={data} seriesColors={seriesColors} forecast={forecast} />
 }
 
 export function CreatedWidgetCard({ widget }: { widget: CreatedWidget }) {
@@ -40,13 +42,18 @@ export function CreatedWidgetCard({ widget }: { widget: CreatedWidget }) {
     () => loadCachedWidgetData(widget),
     [widget.id, meterIds.join(","), widget.dataMode, widget.timePeriod],
   )
+  // A forecast that fails to load is left off rather than failing the chart
+  const { data: forecast } = useApiData(
+    () => loadWidgetForecast(widget),
+    [widget.id, meterIds.join(","), widget.type, widget.dataMode, widget.timePeriod, widget.showForecast],
+  )
   const { deleteCreatedWidget } = useWidgetContext()
   const { openModal, closeModal } = useModal()
   const chartData = data ?? []
 
   const openFullscreen = () => {
     openModal(
-      <WidgetFullscreen widget={widget} data={data} error={error} isLoading={isLoading} />,
+      <WidgetFullscreen widget={widget} data={data} error={error} isLoading={isLoading} forecast={forecast} />,
       "fullscreen",
     )
   }
@@ -122,7 +129,7 @@ export function CreatedWidgetCard({ widget }: { widget: CreatedWidget }) {
         </div>
       </div>
       <div className="min-h-0 flex-1">
-        <WidgetBody widget={widget} data={chartData} error={error} isLoading={isLoading} />
+        <WidgetBody widget={widget} data={chartData} error={error} isLoading={isLoading} forecast={forecast} />
       </div>
     </section>
   )

@@ -1,4 +1,11 @@
-import { GetAllAggregatedMeterPower, GetLatestReadingTimestamp } from "@/lib/api"
+import {
+  ApiError,
+  GetAllAggregatedMeterPower,
+  GetLatestReadingTimestamp,
+  GetMeterForecast,
+  type ApiForecast,
+  type ForecastGranularity,
+} from "@/lib/api"
 import type { CreatedWidget, WidgetFormConfig } from "@/features/dashboard/context/widget-context"
 import { toChartRows, type ChartRow } from "@/lib/chart-data"
 
@@ -38,7 +45,7 @@ export async function loadWidgetData(config: WidgetFormConfig | CreatedWidget): 
   const meterIds = getWidgetMeterIds(config)
 
   if (config.dataMode === "aggregate") {
-    const interval = config.timePeriod === "day" ? "month" : config.timePeriod
+    const interval = config.timePeriod === "latest" ? "month" : config.timePeriod
     const response = await GetAllAggregatedMeterPower(undefined, undefined, interval, meterIds)
     return toChartRows(response)
   }
@@ -65,6 +72,33 @@ export async function loadWidgetData(config: WidgetFormConfig | CreatedWidget): 
 
   const response = await GetAllAggregatedMeterPower(undefined, undefined, undefined, meterIds, true)
   return toChartRows(response)
+}
+
+
+// Forecasts
+
+/** Which saved forecast fits a chart: hourly for raw readings, daily for daily buckets. Single meter only */
+export function forecastGranularity(
+  config: Pick<WidgetFormConfig, "type" | "dataMode" | "timePeriod"> & Pick<CreatedWidget, "meterIds" | "meterId">,
+): ForecastGranularity | null {
+  if (config.type !== "line" && config.type !== "area") return null
+  if (getWidgetMeterIds(config).length !== 1) return null
+  if (config.dataMode === "readings") return "hour"
+  if (config.timePeriod === "day") return "day"
+  return null
+}
+
+/** Loads the chart's forecast, or null when it's turned off, not applicable or not generated yet */
+export async function loadWidgetForecast(config: WidgetFormConfig | CreatedWidget): Promise<ApiForecast | null> {
+  const granularity = forecastGranularity(config)
+  if (!config.showForecast || !granularity) return null
+
+  try {
+    return await GetMeterForecast(getWidgetMeterIds(config)[0], granularity)
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null
+    throw error
+  }
 }
 
 

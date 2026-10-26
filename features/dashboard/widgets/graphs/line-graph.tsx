@@ -1,16 +1,23 @@
 "use client"
 
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
+import { CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts"
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent} from "@/components/ui/chart"
-import { type GraphProps, getChartData, getChartConfig, getSeriesColor, formatAxisDate, formatTooltipValue} from "./graph-common"
+import { formatSeriesValue } from "@/features/dashboard/lib/chart-format"
+import { type GraphProps, MAX_DOTTED_POINTS, getChartData, getChartConfig, getSeriesColor, formatAxisDate} from "./graph-common"
+import { forecastConfig, forecastLayers, withForecast } from "./forecast-layers"
 
-export function LineGraph({ data, unit, seriesColors = {}, dataMode, timePeriod}: GraphProps) {
-  const { data: chartData, series } = getChartData(data)
-  const chartConfig = getChartConfig(series, unit, seriesColors)
+export function LineGraph({ data, unit, seriesColors = {}, dataMode, timePeriod, forecast}: GraphProps) {
+  const { data: actualData, series } = getChartData(data)
+  const { data: chartData, forecastStart } = withForecast(actualData, series, forecast)
+  const chartConfig = {
+    ...getChartConfig(series, unit, seriesColors),
+    ...(forecastStart ? forecastConfig(getSeriesColor(series[0].name, 0, seriesColors)) : {}),
+  }
+  const showDots = chartData.length <= MAX_DOTTED_POINTS
 
   return (
     <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
-      <LineChart data={chartData} accessibilityLayer margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
+      <ComposedChart data={chartData} accessibilityLayer margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
         <CartesianGrid vertical={false} />
 
         <XAxis
@@ -30,12 +37,14 @@ export function LineGraph({ data, unit, seriesColors = {}, dataMode, timePeriod}
           content={
             <ChartTooltipContent
               labelFormatter={(value) => formatAxisDate(value, dataMode, timePeriod)}
-              formatter={(value) => formatTooltipValue(value, unit)}
+              formatter={(value, name) => formatSeriesValue(value, name, unit)}
             />
           }
         />
 
         <ChartLegend content={<ChartLegendContent />} />
+
+        {forecastLayers(forecastStart)}
 
         {series.map(({ key, name }, index) => {
           const color = getSeriesColor(name, index, seriesColors)
@@ -48,13 +57,14 @@ export function LineGraph({ data, unit, seriesColors = {}, dataMode, timePeriod}
             type="monotone"
             stroke={color}
             strokeWidth={2}
-            dot={{ r: 3, fill: color }}
+            dot={showDots && { r: 3, fill: color }}
             activeDot={{ r: 5 }}
+            isAnimationActive={showDots}
           />
           )
         })}
 
-      </LineChart>
+      </ComposedChart>
     </ChartContainer>
   )
 }

@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useWidgetContext, type CreatedWidget } from "@/features/dashboard/context/widget-context"
 import { useModal } from "@/components/forms/modal"
 import { CHART_SERIES_COLORS, type ChartRow } from "@/lib/chart-data"
+import type { ApiForecast } from "@/lib/api"
 import { formatTableDate } from "@/features/dashboard/lib/chart-format"
 import { WidgetVisualization } from "./widget-visualization"
 import { getWidgetMeterIds } from "@/features/dashboard/lib/widget-data"
@@ -70,11 +71,13 @@ export function WidgetFullscreen({
   data,
   error,
   isLoading,
+  forecast,
 }: {
   widget: CreatedWidget
   data?: ChartRow[]
   error?: Error
   isLoading: boolean
+  forecast?: ApiForecast | null
 }) {
   const { closeModal } = useModal()
   const { updateCreatedWidgetRates, updateCreatedWidgetColors } = useWidgetContext()
@@ -180,12 +183,17 @@ export function WidgetFullscreen({
               data={displayData}
               unit={metric === "cost" ? "AUD" : "kWh"}
               seriesColors={draftColors}
+              forecast={forecast}
             />
           )}
         </div>
       </main>
 
       <aside className="flex min-h-0 flex-col gap-4 overflow-y-auto border-t pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+        {forecast && (
+          <ForecastSummary forecast={forecast} rates={Object.values(draftRates[meterIds[0]] ?? {})} />
+        )}
+
         <div>
           <h3 className="text-sm font-semibold">Meter colors</h3>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -311,6 +319,37 @@ export function WidgetFullscreen({
           </Button>
         </div>
       </aside>
+    </div>
+  )
+}
+
+function ForecastSummary({ forecast, rates }: { forecast: ApiForecast; rates: number[] }) {
+  const unit = forecast.granularity === "hour" ? "hours" : "days"
+  const totalKwh = forecast.points.reduce((sum, point) => sum + point.p50, 0)
+  // Projected cost uses the average of the rates entered for this meter
+  const averageRate = rates.length ? rates.reduce((sum, rate) => sum + rate, 0) / rates.length : undefined
+  const { backtest } = forecast
+  const generated = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(forecast.generatedAt))
+
+  return (
+    <div className="grid gap-1.5 border-b pb-4">
+      <h3 className="text-sm font-semibold">Forecast</h3>
+      <p className="text-xs text-muted-foreground">{forecast.model}, generated {generated}</p>
+      <p className="text-sm">
+        Next {forecast.points.length} {unit}:{" "}
+        <span className="font-semibold">{Math.round(totalKwh).toLocaleString()} kWh</span>
+      </p>
+      {averageRate !== undefined && (
+        <p className="text-sm">
+          Projected cost: <span className="font-semibold">{currencyFormatter.format((totalKwh * averageRate) / 100)}</span>
+        </p>
+      )}
+      {backtest?.modelMape != null && backtest.baselineMape != null && (
+        <p className="text-xs text-muted-foreground">
+          Tested on the last {backtest.horizon} {unit} of real data: {backtest.modelMape.toFixed(1)}% average error,
+          vs {backtest.baselineMape.toFixed(1)}% for repeating the last {forecast.granularity === "hour" ? "week" : "week's pattern"}.
+        </p>
+      )}
     </div>
   )
 }

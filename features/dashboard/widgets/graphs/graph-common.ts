@@ -7,6 +7,10 @@ import {
 } from "@/lib/chart-data"
 import { formatChartDate, formatChartValue } from "../../lib/chart-format"
 import type { ChartConfig } from "@/components/ui/chart"
+import type { GraphForecast } from "./forecast-layers"
+
+/** Above this many points, dots and animation make resizing sluggish */
+export const MAX_DOTTED_POINTS = 60
 
 export type GraphProps = {
   data: ChartRow[]
@@ -14,6 +18,8 @@ export type GraphProps = {
   seriesColors?: Record<string, string>
   dataMode: WidgetFormConfig["dataMode"]
   timePeriod: WidgetFormConfig["timePeriod"]
+  /** Drawn after the actual data on single-meter line and area charts */
+  forecast?: GraphForecast
 }
 
 export function getChartData(data: ChartRow[]) {
