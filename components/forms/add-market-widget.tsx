@@ -1,8 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { useWidgetContext } from "@/contexts/widget-context"
-import { WIDGETS, type WidgetType } from "@/components/widget/widgets"
+import { useWidgetContext } from "@/features/dashboard/context/widget-context"
+import { WIDGETS, type WidgetType } from "@/features/dashboard/widgets/widgets"
 import { MARKET_SOURCE } from "@/lib/market"
 import { useModal } from "./modal"
 

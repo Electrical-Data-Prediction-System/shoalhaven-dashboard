@@ -85,11 +85,21 @@ export function GetAggregatedMeterPower(
   return ApiFetch(`/meters/${meterId}/aggregate-power?${params}`)
 }
 
-export function GetAllAggregatedMeterPower(start?: Date, end?: Date): Promise<ApiPowerResponse> {
+export function GetAllAggregatedMeterPower(
+  start?: Date,
+  end?: Date,
+  interval?: string,
+  meterIds: string[] = [],
+  raw = false
+): Promise<ApiPowerResponse> {
   const params = new URLSearchParams();
-  if (start) params.set("start", start.toISOString().split('T')[0]);
-  if (end) params.set("end", end.toISOString().split('T')[0]);
 
+  if (start) params.set("start", raw ? start.toISOString() : start.toISOString().split('T')[0]);
+  if (end) params.set("end", raw ? end.toISOString() : end.toISOString().split('T')[0]);
+  if (interval) params.set("interval", interval);
+  for (const meterId of meterIds) params.append("meterIds", meterId);
+
+  if (raw) return ApiFetch(`/meters/power/raw-power?${params}`)
   return ApiFetch(`/meters/power/aggregate-power?${params}`);
 }
 

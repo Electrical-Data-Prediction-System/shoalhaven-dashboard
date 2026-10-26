@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import Modal, { ModalProvider } from "@/components/forms/modal";
-import { WidgetProvider } from "@/contexts/widget-context";
+import { WidgetProvider } from "@/features/dashboard/context/widget-context";
 
 const roboto = Roboto({ subsets: ['latin'], variable: '--font-sans' });
 

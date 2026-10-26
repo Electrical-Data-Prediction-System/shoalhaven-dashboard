@@ -1,20 +1,30 @@
 export type ApiPoint = { x: string, y: number }
 export type ApiSeries = { series: { name: string; data: ApiPoint[] }[] }
 export type ApiMeterPower = { name: string; KWH: number }
-export type ApiPowerResponse = ApiSeries | ApiMeterPower[]
-export type ChartRow = { x: string; kwh: number }
+export type ApiMeterPowerRow = { date: string; [meterId: string]: string | number }
+export type ApiPowerResponse = ApiSeries | ApiMeterPower[] | ApiMeterPowerRow[]
+export type ChartRow = { x: string; kwh: number; series?: string }
+export const CHART_SERIES_COLORS = ["#217acc", "#f28c28", "#155e9c", "#8e5ea2", "#2f855a", "#c53030"]
 /** A chart row that may hold actual usage, the forecast median and its p10-p90 band */
 export type ForecastChartRow = { x: string; kwh?: number; forecast?: number; band?: [number, number] }
 export type ForecastPoint = { x: string; p10: number; p50: number; p90: number }
 
 export const toChartRows = (response: ApiPowerResponse): ChartRow[] => {
   if (Array.isArray(response)) {
-    return response.map(({ name, KWH }) => ({ x: name, kwh: KWH }))
+    if (response.length > 0 && "date" in response[0]) {
+      return (response as ApiMeterPowerRow[]).flatMap(({ date, ...meterValues }) =>
+        Object.entries(meterValues)
+          .filter((entry): entry is [string, number] => typeof entry[1] === "number")
+          .map(([series, kwh]) => ({ x: date, kwh, series })),
+      )
+    }
+
+    return (response as ApiMeterPower[]).map(({ name, KWH }) => ({ x: name, kwh: KWH }))
   }
 
   if (response && Array.isArray(response.series)) {
-    return response.series.flatMap(({ data }) =>
-      data.map(({ x, y }) => ({ x: String(x), kwh: y })),
+    return response.series.flatMap(({ name, data }) =>
+      data.map(({ x, y }) => ({ x: String(x), kwh: y, series: name })),
     )
   }
 
@@ -43,10 +53,16 @@ export const readingIntervalMinutes = (rows: ChartRow[]): number | null => {
  * the forecast line so the two join up, and points that overlap actual data are dropped.
  * `scale` converts forecast values to the rows' unit, e.g. 0.5 turns kWh per hour into kWh per half-hour reading.
  */
-export const mergeForecast = (rows: ChartRow[], points: ForecastPoint[], scale = 1): ForecastChartRow[] => {
+export const mergeForecast = <T extends { x: string }>(
+  rows: T[],
+  points: ForecastPoint[],
+  scale = 1,
+  valueKey = "kwh",
+): (T | ForecastChartRow)[] => {
   if (!rows.length || !points.length) return rows
 
   const last = rows[rows.length - 1]
+  const lastValue = Number((last as Record<string, unknown>)[valueKey] ?? 0)
   const lastTime = toTime(last.x)
   const future = points
     .filter((point) => toTime(point.x) > lastTime)
@@ -60,9 +76,23 @@ export const mergeForecast = (rows: ChartRow[], points: ForecastPoint[], scale =
 
   return [
     ...rows.slice(0, -1),
-    { ...last, forecast: last.kwh, band: [last.kwh, last.kwh] },
+    { ...last, forecast: lastValue, band: [lastValue, lastValue] },
     ...future,
   ]
+}
+
+/**
+ * Thins multi-meter rows for drawing by keeping the same time points for every meter,
+ * chosen with `downsample` on the combined total. Thinning each meter separately would
+ * keep different times per meter and break the lines into gaps.
+ */
+export const downsampleRows = (rows: ChartRow[], threshold = 300): ChartRow[] => {
+  const totals = new Map<string, number>()
+  for (const row of rows) totals.set(row.x, (totals.get(row.x) ?? 0) + row.kwh)
+  if (totals.size <= threshold) return rows
+
+  const keep = new Set(downsample([...totals].map(([x, kwh]) => ({ x, kwh })), threshold).map(({ x }) => x))
+  return rows.filter(({ x }) => keep.has(x))
 }
 
 /**
@@ -112,3 +142,38 @@ export const downsample = <T extends ChartRow>(rows: T[], threshold = 300): T[] 
   sampled.push(rows[rows.length - 1])
   return sampled
 }
+
+export type ChartSeries = { key: string; name: string }
+export type MultiSeriesChartData = {
+  data: ({ x: string } & Record<string, string | number>)[]
+  series: ChartSeries[]
+}
+
+export function toMultiSeriesChartData(rows: ChartRow[]): MultiSeriesChartData {
+  const names = [...new Set(rows.map(({ series }) => series ?? "kwh"))]
+  const series = names.map((name, index) => ({ name, key: `series${index}` }))
+  const seriesByName = new Map(series.map((entry) => [entry.name, entry]))
+  const dataByDate = new Map<string, ({ x: string } & Record<string, string | number>)>()
+
+  for (const row of rows) {
+    const entry = seriesByName.get(row.series ?? "kwh")
+    if (!entry) continue
+
+    let point = dataByDate.get(row.x)
+    if (!point) {
+      point = { x: row.x }
+      dataByDate.set(row.x, point)
+    }
+    point[entry.key] = Number(point[entry.key] ?? 0) + row.kwh
+  }
+
+  return {
+    data: [...dataByDate.values()],
+    series,
+  }
+}
+
+// date: datetime
+
+//     __pydantic_extra__: dict[str, float] = Field(init=False)
+//     model_config = ConfigDict(extra="allow")

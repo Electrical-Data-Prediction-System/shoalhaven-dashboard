@@ -2,17 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  LogOut,
-  Settings,
-  Waves,
-  Zap,
-  Droplet,
-  Plus,
-  ChartLine,
-  SunMedium,
-  MapIcon,
-} from "lucide-react"
+import { LogOut, Settings, Dam, Zap, Droplet, Plus, ChartLine, SunMedium, MapIcon } from "lucide-react"
+
+import { SidebarMain } from "./sidebar-main"
+import { useModal } from "../forms/modal"
+import AddMarketWidget from "../forms/add-market-widget"
+import { WIDGETS } from "@/features/dashboard/widgets/widgets"
+import { useWidgetContext } from "@/features/dashboard/context/widget-context"
+import WidgetForm from "@/features/dashboard/editor/create-widget"
 
 import {
   Sidebar,
@@ -27,13 +24,6 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-import { SidebarMain } from "./sidebar-main"
-import { useModal } from "../forms/modal"
-import WidgetForm from "../forms/create-widget"
-import AddMarketWidget from "../forms/add-market-widget"
-
-import { WIDGETS } from "@/components/widget/widgets"
-import { useWidgetContext } from "@/contexts/widget-context"
 
 const otherSections = [
   {
@@ -58,7 +48,7 @@ const otherSections = [
   {
     title: "Sewer",
     url: "/sewer",
-    icon: Droplet,
+    icon: Dam,
     items: [
       {
         title: "Widget 4",
@@ -113,14 +103,13 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center px-2 py-1.5">
-          <span className="text-lg font-bold tracking-wide">HYDROCHART</span>
+          <a href="/"><span className="text-lg font-bold tracking-wide">HYDROCHART</span></a>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarMain items={navMain}></SidebarMain>
       </SidebarContent>
-
   
         <SidebarFooter>
           <SidebarMenu>
@@ -152,15 +141,16 @@ export function AppSidebar() {
                 <span>Sign out</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
             <SidebarMenuItem>
               <SidebarMenuButton render={<Link href="/settings" />}>
                 <Settings />
                 <span>Settings</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
           </SidebarMenu>
         </SidebarFooter>
-
       <SidebarRail />
     </Sidebar>
   )

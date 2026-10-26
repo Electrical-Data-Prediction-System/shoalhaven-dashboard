@@ -55,8 +55,9 @@ test("opens the chart form and searches for a meter", async ({ page }) => {
 })
 
 test("creates a daily chart with a forecast overlay", async ({ page }) => {
-  await page.route("**/api/meters/meter-1/**", async (route) => {
+  await page.route("**/api/meters/**", async (route) => {
     const url = new URL(route.request().url())
+    if (url.pathname === "/api/meters") return route.fallback()
     if (url.pathname.endsWith("/forecast")) {
       await route.fulfill({
         json: {
@@ -74,18 +75,18 @@ test("creates a daily chart with a forecast overlay", async ({ page }) => {
       })
       return
     }
-    await route.fulfill({
-      json: {
-        series: [{
-          name: "KWH",
-          data: [
-            { x: "2025-12-31T13:00:00", y: 10 },
-            { x: "2026-01-01T13:00:00", y: 12 },
-            { x: "2026-01-02T13:00:00", y: 11 },
-          ],
-        }],
-      },
-    })
+    if (url.pathname === "/api/meters/power/aggregate-power") {
+      // Charts load through the multi-meter route: one row per date, one column per meter
+      await route.fulfill({
+        json: [
+          { date: "2025-12-31T13:00:00", "meter-1": 10 },
+          { date: "2026-01-01T13:00:00", "meter-1": 12 },
+          { date: "2026-01-02T13:00:00", "meter-1": 11 },
+        ],
+      })
+      return
+    }
+    await route.fallback()
   })
 
   await page.goto("/")
@@ -94,8 +95,9 @@ test("creates a daily chart with a forecast overlay", async ({ page }) => {
   await page.getByLabel("Chart type").click()
   await page.getByRole("option", { name: "Line" }).click()
   await page.getByLabel("Search location").fill("Nowra")
-  await page.getByLabel("Meter").click()
+  await page.getByLabel("Meters").click()
   await page.getByRole("option", { name: /10 Main Street, Nowra/ }).click()
+  await page.keyboard.press("Escape")
   await page.getByLabel("Bucket interval").click()
   await page.getByRole("option", { name: "Every day" }).click()
   await page.getByLabel("Show forecast").check()

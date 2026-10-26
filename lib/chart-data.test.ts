@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { complementColor } from "./chart-format"
-import { downsample, mergeForecast, readingIntervalMinutes, toChartRows } from "./chart-data"
+import { complementColor } from "@/features/dashboard/lib/chart-format"
+import { downsample, downsampleRows, mergeForecast, readingIntervalMinutes, toChartRows, toMultiSeriesChartData } from "./chart-data"
 
 describe("toChartRows", () => {
   it("converts an API series response into chart rows", () => {
@@ -18,9 +18,9 @@ describe("toChartRows", () => {
         ],
       }),
     ).toEqual([
-      { x: "2026-01-01T00:00:00Z", kwh: 12.5 },
-      { x: "2026-01-01T01:00:00Z", kwh: 8 },
-      { x: "2026-01-01T00:00:00Z", kwh: 3 },
+      { x: "2026-01-01T00:00:00Z", kwh: 12.5, series: "Meter 1" },
+      { x: "2026-01-01T01:00:00Z", kwh: 8, series: "Meter 1" },
+      { x: "2026-01-01T00:00:00Z", kwh: 3, series: "Meter 2" },
     ])
   })
 
@@ -34,6 +34,37 @@ describe("toChartRows", () => {
       { x: "Meter 1", kwh: 24 },
       { x: "Meter 2", kwh: 0 },
     ])
+  })
+
+  it("converts date rows with a value for each meter into chart series", () => {
+    expect(
+      toChartRows([
+        { date: "2025-09-30T14:00:00", "meter-1": 528.89, "meter-2": 557.31 },
+        { date: "2025-10-31T13:00:00", "meter-2": 2525.89, "meter-1": 2521.48 },
+      ]),
+    ).toEqual([
+      { x: "2025-09-30T14:00:00", kwh: 528.89, series: "meter-1" },
+      { x: "2025-09-30T14:00:00", kwh: 557.31, series: "meter-2" },
+      { x: "2025-10-31T13:00:00", kwh: 2525.89, series: "meter-2" },
+      { x: "2025-10-31T13:00:00", kwh: 2521.48, series: "meter-1" },
+    ])
+  })
+
+  it("pivots meter rows into date-aligned chart data", () => {
+    expect(toMultiSeriesChartData([
+      { x: "2025-09-30", kwh: 10, series: "meter-1" },
+      { x: "2025-09-30", kwh: 20, series: "meter-2" },
+      { x: "2025-10-31", kwh: 25, series: "meter-1" },
+    ])).toEqual({
+      data: [
+        { x: "2025-09-30", series0: 10, series1: 20 },
+        { x: "2025-10-31", series0: 25 },
+      ],
+      series: [
+        { name: "meter-1", key: "series0" },
+        { name: "meter-2", key: "series1" },
+      ],
+    })
   })
 })
 
@@ -101,5 +132,20 @@ describe("forecast scaling for raw readings", () => {
     const merged = mergeForecast(halfHourly, [{ x: "2026-01-01T02:00:00", p10: 10, p50: 14, p90: 18 }], 0.5)
 
     expect(merged.at(-1)).toEqual({ x: "2026-01-01T02:00:00", forecast: 7, band: [5, 9] })
+  })
+})
+
+describe("downsampleRows", () => {
+  it("keeps the same time points for every meter", () => {
+    const rows = Array.from({ length: 1000 }, (_, i) => [
+      { x: String(i).padStart(4, "0"), kwh: i % 10, series: "a" },
+      { x: String(i).padStart(4, "0"), kwh: (i * 3) % 7, series: "b" },
+    ]).flat()
+
+    const sampled = downsampleRows(rows, 100)
+    const times = (series: string) => sampled.filter((row) => row.series === series).map((row) => row.x)
+
+    expect(times("a")).toHaveLength(100)
+    expect(times("a")).toEqual(times("b"))
   })
 })

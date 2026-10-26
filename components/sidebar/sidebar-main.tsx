@@ -18,7 +18,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { useWidgetContext } from "@/contexts/widget-context"
+import { useWidgetContext } from "@/features/dashboard/context/widget-context"
 
 export function SidebarMain({
   items,
