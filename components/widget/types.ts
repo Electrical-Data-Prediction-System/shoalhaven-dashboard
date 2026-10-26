@@ -10,6 +10,10 @@ type WidgetBase = {
   defaultSize: WidgetSize
   /** Adds `overflow-hidden` to the shell for widgets that clip their content */
   overflow?: "hidden" | "visible"
+  /** Groups built-ins that users add themselves from a picker, e.g. "market" */
+  category?: "market"
+  /** One line shown in the add-widget picker */
+  description?: string
   // TODO: enforce minSize / maxSize while resizing
   minSize?: WidgetSize
   maxSize?: WidgetSize
@@ -21,9 +25,9 @@ export type DataWidget = WidgetBase & {
   render: (data: ApiPowerResponse) => ReactNode
 }
 
-/** A widget with no data source. */
+/** A widget with no data source, or one that loads its own data from its saved options */
 export type StaticWidget = WidgetBase & {
-  render: () => ReactNode
+  render: (widget: PlacedWidget) => ReactNode
 }
 
 export type WidgetDefinition = DataWidget | StaticWidget
@@ -43,4 +47,6 @@ export type PlacedWidget<TType extends string = string> = {
   /** Optional dashboard-specific title override for built-in widgets */
   title?: string
   layout: WidgetLayout
+  /** Per-widget settings saved with the layout, e.g. { season: "winter" } */
+  options?: Record<string, string>
 }

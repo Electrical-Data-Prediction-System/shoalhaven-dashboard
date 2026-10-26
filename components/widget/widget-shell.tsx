@@ -81,7 +81,7 @@ export const WidgetShell = memo(function WidgetShell({
             size="icon-sm"
             aria-label={`Maximize ${title}`}
             title="Maximize widget"
-            onClick={() => openModal(<WidgetFullscreen title={title} def={def} />, "fullscreen")}
+            onClick={() => openModal(<WidgetFullscreen title={title} def={def} widget={widget} />, "fullscreen")}
           >
             <Maximize2 />
           </Button>
@@ -108,7 +108,7 @@ export const WidgetShell = memo(function WidgetShell({
         </div>
       </div>
       <div className="min-h-0 flex-1">
-        <WidgetContent def={def} />
+        <WidgetContent def={def} widget={widget} />
       </div>
     </div>
   )
@@ -140,7 +140,7 @@ function EditWidgetTitle({ title, onSave }: { title: string; onSave: (title: str
   )
 }
 
-function WidgetFullscreen({ title, def }: { title: string; def: WidgetDefinition }) {
+function WidgetFullscreen({ title, def, widget }: { title: string; def: WidgetDefinition; widget: PlacedWidget }) {
   const { closeModal } = useModal()
 
   return (
@@ -152,14 +152,14 @@ function WidgetFullscreen({ title, def }: { title: string; def: WidgetDefinition
         </Button>
       </header>
       <div className="min-h-0 flex-1">
-        <WidgetContent def={def} />
+        <WidgetContent def={def} widget={widget} />
       </div>
     </div>
   )
 }
 
-function WidgetContent({ def }: { def: WidgetDefinition }) {
-  if (!isDataWidget(def)) return <>{def.render()}</>
+function WidgetContent({ def, widget }: { def: WidgetDefinition; widget: PlacedWidget }) {
+  if (!isDataWidget(def)) return <>{def.render(widget)}</>
   return <DataWidgetContent def={def} />
 }
 

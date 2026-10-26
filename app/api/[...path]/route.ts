@@ -4,7 +4,7 @@ const API_INTERNAL_URL = process.env.API_INTERNAL_URL
 
 // Only forward requests under these upstream path prefixes. Anything else is
 // rejected so this route cannot be used as an open proxy.
-const ALLOWED_PREFIXES = ["meters", "readings"]
+const ALLOWED_PREFIXES = ["meters", "readings", "market"]
 
 type RouteContext = { params: Promise<{ path: string[] }> }
 

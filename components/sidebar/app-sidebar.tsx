@@ -9,6 +9,8 @@ import {
   Zap,
   Droplet,
   Plus,
+  ChartLine,
+  SunMedium,
 } from "lucide-react"
 
 import {
@@ -27,6 +29,7 @@ import {
 import { SidebarMain } from "./sidebar-main"
 import { useModal } from "../forms/modal"
 import WidgetForm from "../forms/create-widget"
+import AddMarketWidget from "../forms/add-market-widget"
 
 import { WIDGETS } from "@/components/widget/widgets"
 import { useWidgetContext } from "@/contexts/widget-context"
@@ -79,15 +82,23 @@ export function AppSidebar() {
 
   const { placed, createdWidgets } = useWidgetContext();
 
+  const isMarket = (type: keyof typeof WIDGETS) => {
+    const def = WIDGETS[type]
+    return "category" in def && def.category === "market"
+  }
+  const placedItems = placed
+    .filter((p) => p.type in WIDGETS)
+    .map((p) => ({ title: p.title ?? WIDGETS[p.type].title, url: "#", widgetId: p.id, market: isMarket(p.type) }))
+
   const powerItems = [
-    ...placed
-      .filter((p) => p.type in WIDGETS)
-      .map((p) => ({ title: p.title ?? WIDGETS[p.type].title, url: "#", widgetId: p.id})),
+    ...placedItems.filter((item) => !item.market),
     ...createdWidgets.map((w) => ({ title: w.name, url: "#", widgetId: w.id}))
   ]
+  const marketItems = placedItems.filter((item) => item.market)
 
   const navMain = [
     { title: "Power", url: "#", icon: Zap, isActive: true, items: powerItems},
+    ...(marketItems.length ? [{ title: "Energy market", url: "#", icon: SunMedium, isActive: true, items: marketItems }] : []),
     ...otherSections
   ]
 
@@ -111,6 +122,13 @@ export function AppSidebar() {
               <SidebarMenuButton className="cursor-pointer" onClick={() => openModal(<WidgetForm />)}>
                 <Plus />
                 <span>Create Chart</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton className="cursor-pointer" onClick={() => openModal(<AddMarketWidget />)}>
+                <ChartLine />
+                <span>Add market widget</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
 

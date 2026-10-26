@@ -128,3 +128,45 @@ export function SumReadingsBetween(start?: Date, end?: Date): Promise<ApiSeries>
 
   return ApiFetch(`/readings/aggregate?${params}`)
 }
+
+export type MarketSeries = "price" | "demand" | "solar_rooftop" | "solar_utility" | "gullen_solar";
+export type MarketRow = { date: string } & Partial<Record<MarketSeries, number>>;
+export type MarketProfileRow = { time: string } & Partial<Record<MarketSeries, number>>;
+export type MarketStats = {
+  start: string;
+  end: string;
+  count: number;
+  average: number | null;
+  max: number | null;
+  min: number | null;
+  negativeShare: number | null;
+  middayAverage: number | null;
+  eveningAverage: number | null;
+};
+
+function marketParams(series: MarketSeries[], months?: number[]) {
+  const params = new URLSearchParams();
+  series.forEach((name) => params.append("series", name));
+  months?.forEach((month) => params.append("months", String(month)));
+  return params;
+}
+
+/** Cached NSW market data averaged into half hour, day or month buckets */
+export function GetMarketSeries(
+  series: MarketSeries[],
+  interval: "30m" | "day" | "month" = "day",
+  months?: number[],
+): Promise<MarketRow[]> {
+  const params = marketParams(series, months);
+  params.set("interval", interval);
+  return ApiFetch(`/market/series?${params}`);
+}
+
+/** Average of each series for every half hour of the day */
+export function GetMarketDailyProfile(series: MarketSeries[], months?: number[]): Promise<MarketProfileRow[]> {
+  return ApiFetch(`/market/daily-profile?${marketParams(series, months)}`);
+}
+
+export function GetMarketStats(months?: number[]): Promise<MarketStats> {
+  return ApiFetch(`/market/stats?${marketParams([], months)}`);
+}
