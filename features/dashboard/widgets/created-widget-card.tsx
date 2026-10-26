@@ -13,6 +13,7 @@ import type { ApiForecast } from "@/lib/api"
 import { WidgetVisualization } from "./widget-visualization"
 import { WidgetFullscreen } from "./widget-fullscreen"
 import { getWidgetMeterIds } from "@/features/dashboard/lib/widget-data"
+import { useAlertRules } from "@/features/dashboard/alerts/use-alerts"
 
 interface WidgetBodyProps {
   widget: CreatedWidget,
@@ -20,9 +21,10 @@ interface WidgetBodyProps {
   error?: Error,
   isLoading: boolean
   forecast?: ApiForecast | null
+  limits?: { lower?: number; upper?: number }
 }
 
-function WidgetBody({ widget, data, error, isLoading, forecast }: WidgetBodyProps) {
+function WidgetBody({ widget, data, error, isLoading, forecast, limits }: WidgetBodyProps) {
   if (isLoading) return <Skeleton className="h-full w-full" />
   if (error) return <p className=" break-words p-2 text-sm text-destructive" title={error.message}>Failed to load: {error.message}</p>
   if (!data?.length) {
@@ -33,7 +35,7 @@ function WidgetBody({ widget, data, error, isLoading, forecast }: WidgetBodyProp
     )
   }
   const seriesColors = widget.colorsByMeter ?? {}
-  return <WidgetVisualization widget={widget} data={data} seriesColors={seriesColors} forecast={forecast} />
+  return <WidgetVisualization widget={widget} data={data} seriesColors={seriesColors} forecast={forecast} limits={limits} />
 }
 
 export function CreatedWidgetCard({ widget }: { widget: CreatedWidget }) {
@@ -47,6 +49,12 @@ export function CreatedWidgetCard({ widget }: { widget: CreatedWidget }) {
     () => loadWidgetForecast(widget),
     [widget.id, meterIds.join(","), widget.type, widget.dataMode, widget.timePeriod, widget.showForecast],
   )
+  // Alert limits are daily kWh, so they only make sense on a single-meter daily chart
+  const { rules } = useAlertRules()
+  const rule = meterIds.length === 1 && widget.dataMode === "aggregate" && widget.timePeriod === "day"
+    ? rules.find(({ meterId }) => meterId === meterIds[0])
+    : undefined
+  const limits = rule ? { lower: rule.lower, upper: rule.upper } : undefined
   const { deleteCreatedWidget } = useWidgetContext()
   const { openModal, closeModal } = useModal()
   const chartData = data ?? []
@@ -129,7 +137,7 @@ export function CreatedWidgetCard({ widget }: { widget: CreatedWidget }) {
         </div>
       </div>
       <div className="min-h-0 flex-1">
-        <WidgetBody widget={widget} data={chartData} error={error} isLoading={isLoading} forecast={forecast} />
+        <WidgetBody widget={widget} data={chartData} error={error} isLoading={isLoading} forecast={forecast} limits={limits} />
       </div>
     </section>
   )

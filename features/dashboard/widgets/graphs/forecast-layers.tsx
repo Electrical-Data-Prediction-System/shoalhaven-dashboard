@@ -31,6 +31,23 @@ export function forecastConfig(seriesColor: string): ChartConfig {
   }
 }
 
+/** A meter's alert limits as red dashed lines */
+export function limitLayers(limits?: { lower?: number; upper?: number }) {
+  if (!limits) return null
+
+  return (["upper", "lower"] as const)
+    .filter((side) => limits[side] !== undefined)
+    .map((side) => (
+      <ReferenceLine
+        key={`limit-${side}`}
+        y={limits[side]}
+        stroke="#c0392b"
+        strokeDasharray="5 4"
+        label={{ value: `${side === "upper" ? "Upper" : "Lower"} limit`, position: side === "upper" ? "insideTopRight" : "insideBottomRight", fontSize: 11, fill: "#c0392b" }}
+      />
+    ))
+}
+
 /** Shaded p10-p90 band, dashed p50 line and a marker where the forecast starts */
 export function forecastLayers(forecastStart?: string) {
   if (!forecastStart) return null

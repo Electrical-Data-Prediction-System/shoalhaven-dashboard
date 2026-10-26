@@ -13,12 +13,14 @@ export function WidgetVisualization({
   unit = "kWh",
   seriesColors,
   forecast,
+  limits,
 }: {
   widget: CreatedWidget
   data: ChartRow[]
   unit?: string
   seriesColors?: Record<string, string>
   forecast?: ApiForecast | null
+  limits?: { lower?: number; upper?: number }
 }) {
   // Thousands of raw readings are too many to draw, so plot a shape-preserving sample
   const plotted = downsampleRows(data)
@@ -32,10 +34,10 @@ export function WidgetVisualization({
     : undefined
 
   if (widget.type === "line") {
-    return <LineGraph data={plotted} unit={unit} seriesColors={seriesColors} dataMode={widget.dataMode} timePeriod={widget.timePeriod} forecast={graphForecast} />
+    return <LineGraph data={plotted} unit={unit} seriesColors={seriesColors} dataMode={widget.dataMode} timePeriod={widget.timePeriod} forecast={graphForecast} limits={unit !== "AUD" ? limits : undefined} />
   }
   if (widget.type === "area") {
-    return <AreaGraph data={plotted} unit={unit} seriesColors={seriesColors} dataMode={widget.dataMode} timePeriod={widget.timePeriod} forecast={graphForecast} />
+    return <AreaGraph data={plotted} unit={unit} seriesColors={seriesColors} dataMode={widget.dataMode} timePeriod={widget.timePeriod} forecast={graphForecast} limits={unit !== "AUD" ? limits : undefined} />
   }
   if (widget.type === "bar") {
     return <BarGraph data={plotted} unit={unit} seriesColors={seriesColors} dataMode={widget.dataMode} timePeriod={widget.timePeriod} />
