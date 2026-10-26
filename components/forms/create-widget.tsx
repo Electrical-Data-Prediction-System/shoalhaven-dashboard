@@ -16,7 +16,14 @@ import { useModal } from "./modal";
 import { GetMeter, SearchMetersByLocation, type MeterSearchResult } from "@/lib/api";
 import { forecastGranularity } from "@/lib/widget-data";
 
-export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedWidget }) {
+export default function WidgetForm({
+  initialWidget,
+  initialMeterId,
+}: {
+  initialWidget?: CreatedWidget
+  /** Pre-selects a meter for a new chart, e.g. when a meter is clicked on the map */
+  initialMeterId?: string
+}) {
   const { closeModal } = useModal();
   const { onCreateWidget, updateCreatedWidget } = useWidgetContext();
   const [chartType, setChartType] = useState<WidgetFormConfig["type"] | undefined>(initialWidget?.type);
@@ -32,12 +39,14 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
     : (timePeriod === "5m" ? "day" : timePeriod)
   const forecastAvailable = chartType !== undefined
     && forecastGranularity({ type: chartType, dataMode, timePeriod: selectedTimePeriod }) !== null
+  const presetMeterId = initialWidget?.meterId ?? initialMeterId
 
+  // Load the preset meter so it shows in the meter list straight away
   useEffect(() => {
-    if (!initialWidget) return
+    if (!presetMeterId) return
 
     let cancelled = false
-    GetMeter(initialWidget.meterId)
+    GetMeter(presetMeterId)
       .then(({ meterObject }) => {
         if (cancelled) return
         setMeters([meterObject])
@@ -52,7 +61,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
     return () => {
       cancelled = true
     }
-  }, [initialWidget])
+  }, [presetMeterId])
 
   useEffect(() => {
     const location = locationQuery.trim();
@@ -203,7 +212,7 @@ export default function WidgetForm({ initialWidget }: { initialWidget?: CreatedW
 
         <div className="space-y-1.5">
           <label htmlFor="meterId" className="text-sm font-medium">Meter</label>
-          <Select name="meterId" defaultValue={initialWidget?.meterId} required>
+          <Select name="meterId" defaultValue={presetMeterId} required>
             <SelectTrigger id="meterId" className="h-10 w-full bg-background">
               <SelectValue placeholder={meters.length ? "Select a meter" : "Search for a location first"} />
             </SelectTrigger>

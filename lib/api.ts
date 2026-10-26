@@ -170,3 +170,38 @@ export function GetMarketDailyProfile(series: MarketSeries[], months?: number[])
 export function GetMarketStats(months?: number[]): Promise<MarketStats> {
   return ApiFetch(`/market/stats?${marketParams([], months)}`);
 }
+
+export type MeterMapPoint = {
+  id: string;
+  type: string;
+  fullAddress: string;
+  place: string;
+  /** [longitude, latitude] */
+  coordinates: [number, number];
+  totalKwh: number | null;
+  inShoalhaven: boolean;
+};
+
+export function GetMeterMap(): Promise<MeterMapPoint[]> {
+  return ApiFetch("/meters/map");
+}
+
+export type MonthSummary = {
+  month: string;
+  totalKwh: number;
+  busiestDay: { date: string; kwh: number } | null;
+  /** Each half hour's kWh x NSW spot price, in AUD. Null without cached market data */
+  wholesaleCost: number | null;
+  pricedShare: number;
+};
+export type PowerSummary = { current: MonthSummary; previous: MonthSummary };
+
+let powerSummary: Promise<PowerSummary> | null = null;
+
+export function GetPowerSummary(): Promise<PowerSummary> {
+  powerSummary ??= ApiFetch("/meters/power/summary").catch((error: unknown) => {
+    powerSummary = null;
+    throw error;
+  });
+  return powerSummary;
+}

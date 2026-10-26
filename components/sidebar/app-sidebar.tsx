@@ -11,6 +11,7 @@ import {
   Plus,
   ChartLine,
   SunMedium,
+  MapIcon,
 } from "lucide-react"
 
 import {
@@ -80,7 +81,13 @@ export function AppSidebar() {
   const { openModal, closeModal, isOpen } = useModal();
 
 
-  const { placed, createdWidgets } = useWidgetContext();
+  const { placed, createdWidgets, addPlacedWidget, highlight } = useWidgetContext();
+
+  const addMeterMap = () => {
+    const id = addPlacedWidget("meter-map", WIDGETS["meter-map"].defaultSize)
+    // Wait a frame so the map is on the grid before scrolling to it
+    requestAnimationFrame(() => highlight(id))
+  }
 
   const isMarket = (type: keyof typeof WIDGETS) => {
     const def = WIDGETS[type]
@@ -122,6 +129,13 @@ export function AppSidebar() {
               <SidebarMenuButton className="cursor-pointer" onClick={() => openModal(<WidgetForm />)}>
                 <Plus />
                 <span>Create Chart</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton className="cursor-pointer" onClick={addMeterMap}>
+                <MapIcon />
+                <span>Add meter map</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
 
