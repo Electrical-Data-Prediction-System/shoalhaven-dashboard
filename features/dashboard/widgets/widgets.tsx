@@ -9,6 +9,7 @@ import { DuckCurveWidget } from "./market/duck-curve-widget"
 import { MarketPriceWidget } from "./market/market-price-widget"
 import { MarketStatsWidget } from "./market/market-stats-widget"
 import { MeterMapWidget } from "./map/meter-map-widget"
+import { AlertsWidget } from "@/features/dashboard/alerts/alerts-widget"
 
 // Pre-built widgets. Add a widget by adding one entry here. 
 export const WIDGETS = {
@@ -59,6 +60,12 @@ export const WIDGETS = {
     defaultSize: { w: 6, h: 6 },
     overflow: "hidden",
     render: () => <MeterMapWidget />,
+  },
+  "alerts": {
+    title: "Usage Alerts",
+    defaultSize: { w: 6, h: 5 },
+    overflow: "hidden",
+    render: (widget: PlacedWidget) => <AlertsWidget widget={widget} />,
   },
   "market-stats": {
     title: "NSW Price Summary",

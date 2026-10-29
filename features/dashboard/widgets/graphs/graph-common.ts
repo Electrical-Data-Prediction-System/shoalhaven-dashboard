@@ -20,6 +20,8 @@ export type GraphProps = {
   timePeriod: WidgetFormConfig["timePeriod"]
   /** Drawn after the actual data on single-meter line and area charts */
   forecast?: GraphForecast
+  /** Alert limits drawn as dashed lines on single-meter daily charts */
+  limits?: { lower?: number; upper?: number }
 }
 
 export function getChartData(data: ChartRow[]) {

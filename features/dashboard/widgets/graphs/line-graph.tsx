@@ -4,9 +4,9 @@ import { CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts"
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent} from "@/components/ui/chart"
 import { formatSeriesValue } from "@/features/dashboard/lib/chart-format"
 import { type GraphProps, MAX_DOTTED_POINTS, getChartData, getChartConfig, getSeriesColor, formatAxisDate} from "./graph-common"
-import { forecastConfig, forecastLayers, withForecast } from "./forecast-layers"
+import { forecastConfig, forecastLayers, limitLayers, withForecast } from "./forecast-layers"
 
-export function LineGraph({ data, unit, seriesColors = {}, dataMode, timePeriod, forecast}: GraphProps) {
+export function LineGraph({ data, unit, seriesColors = {}, dataMode, timePeriod, forecast, limits}: GraphProps) {
   const { data: actualData, series } = getChartData(data)
   const { data: chartData, forecastStart } = withForecast(actualData, series, forecast)
   const chartConfig = {
@@ -45,6 +45,7 @@ export function LineGraph({ data, unit, seriesColors = {}, dataMode, timePeriod,
         <ChartLegend content={<ChartLegendContent />} />
 
         {forecastLayers(forecastStart)}
+        {limitLayers(limits)}
 
         {series.map(({ key, name }, index) => {
           const color = getSeriesColor(name, index, seriesColors)

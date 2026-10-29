@@ -215,3 +215,12 @@ export function GetPowerSummary(): Promise<PowerSummary> {
   });
   return powerSummary;
 }
+
+export type DailyUsage = { meterId: string; date: string; kwh: number };
+
+/** Each meter's kWh per local day for the year before its latest reading */
+export function GetDailyUsage(meterIds: string[]): Promise<DailyUsage[]> {
+  const params = new URLSearchParams();
+  meterIds.forEach((meterId) => params.append("meterIds", meterId));
+  return ApiFetch(`/meters/daily-usage?${params}`);
+}

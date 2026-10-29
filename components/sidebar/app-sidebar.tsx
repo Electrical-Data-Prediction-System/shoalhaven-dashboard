@@ -2,11 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LogOut, Settings, Dam, Zap, Droplet, Plus, ChartLine, SunMedium, MapIcon } from "lucide-react"
+import { LogOut, Settings, Dam, Zap, Droplet, Plus, ChartLine, SunMedium, MapIcon, BellRing } from "lucide-react"
 
 import { SidebarMain } from "./sidebar-main"
 import { useModal } from "../forms/modal"
 import AddMarketWidget from "../forms/add-market-widget"
+import { AlertRulesForm } from "@/features/dashboard/alerts/alert-rules-form"
+import { useAlertBreaches } from "@/features/dashboard/alerts/use-alerts"
 import { WIDGETS } from "@/features/dashboard/widgets/widgets"
 import { useWidgetContext } from "@/features/dashboard/context/widget-context"
 import WidgetForm from "@/features/dashboard/editor/create-widget"
@@ -73,6 +75,9 @@ export function AppSidebar() {
 
   const { placed, createdWidgets, addPlacedWidget, highlight } = useWidgetContext();
 
+  // Days outside the alert limits in the last 30 days of data, shown as a badge
+  const { recent: recentAlerts } = useAlertBreaches()
+
   const addMeterMap = () => {
     const id = addPlacedWidget("meter-map", WIDGETS["meter-map"].defaultSize)
     // Wait a frame so the map is on the grid before scrolling to it
@@ -118,6 +123,21 @@ export function AppSidebar() {
               <SidebarMenuButton className="cursor-pointer" onClick={() => openModal(<WidgetForm />)}>
                 <Plus />
                 <span>Create Chart</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton className="cursor-pointer" onClick={() => openModal(<AlertRulesForm />)}>
+                <BellRing />
+                <span>Alert limits</span>
+                {recentAlerts.length > 0 && (
+                  <span
+                    className="ml-auto rounded-full bg-red-600 px-1.5 text-xs font-semibold text-white"
+                    title={`${recentAlerts.length} days outside the limits in the last 30 days of data`}
+                  >
+                    {recentAlerts.length}
+                  </span>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
 
